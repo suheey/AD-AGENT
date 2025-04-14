@@ -209,16 +209,16 @@ class AgentInstructor:
 
 if __name__ == "__main__":
    agentInstructor = AgentInstructor()
-   from agent_planner import AgentPlanner
+   from agents.agent_selector import AgentSelector
    user_input = {
       "algorithm": ["CARD"],
       "dataset_train": "./data/inj_cora_train.pt",
       "dataset_test": "./data/inj_cora_test.pt",
       "parameters": {}
    }
-   agentPlanner = AgentPlanner(user_input=user_input)# if want to unit test, please import AgentPlanner
-   vectorstore = agentPlanner.vectorstore
+   agentSelector = AgentSelector(user_input=user_input)# if want to unit test, please import AgentSelector
+   vectorstore = agentSelector.vectorstore
 
-   code = agentInstructor.generate_code(algorithm=agentPlanner.tools[0], data_path_train = agentPlanner.data_path_train, data_path_test=agentPlanner.data_path_test, vectorstore = vectorstore, input_parameters = agentPlanner.parameters, package_name = agentPlanner.package_name)
+   code = agentInstructor.generate_code(algorithm=agentSelector.tools[0], data_path_train = agentSelector.data_path_train, data_path_test=agentSelector.data_path_test, vectorstore = vectorstore, input_parameters = agentSelector.parameters, package_name = agentSelector.package_name)
 
-   print(agentInstructor.execute_generated_code(code,agentPlanner.tools[0]))
+   print(agentInstructor.execute_generated_code(code,agentSelector.tools[0]))

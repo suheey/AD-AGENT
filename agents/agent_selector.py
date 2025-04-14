@@ -4,7 +4,7 @@ from langchain.text_splitter import CharacterTextSplitter
 import os
 
 
-class AgentPlanner:
+class AgentSelector:
     def __init__(self, user_input):
       self.parameters = user_input['parameters']
       self.data_path_train = user_input['dataset_train']
@@ -60,5 +60,5 @@ if __name__ == "__main__":
       "contamination": 0.1
     }
   }
-  agentPlanner = AgentPlanner(user_input= user_input)
-  print(f"Tools: {agentPlanner.tools}")
+  agentSelector = AgentSelector(user_input= user_input)
+  print(f"Tools: {agentSelector.tools}")
