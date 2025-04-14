@@ -179,11 +179,8 @@ class AgentInstructor:
       clean_code = re.sub(r"```", "", clean_code)
       return clean_code.strip()
 
-   def generate_code(self, algorithm, data_path_train="./data/glass_train.mat",data_path_test = "./data/glass_test.mat", vectorstore=None, input_parameters = {},package_name = None):
+   def generate_code(self, algorithm, data_path_train="./data/glass_train.mat",data_path_test = "./data/glass_test.mat", algorithm_doc = "", input_parameters = {},package_name = None):
       """Generates Python code for anomaly detection using PyOD, using external documentation."""
-      algorithm_doc = self.query_docs(algorithm, vectorstore, package_name)
-      print("\n=== Extracted Documentation ===\n")
-      print(algorithm_doc)
       generated_code = ""
       if package_name == "pyod":
          generated_code = llm.invoke(
@@ -208,95 +205,6 @@ class AgentInstructor:
 
 
       return self.clean_generated_code(generated_code)
-   # def query_docs(self, algorithm, vectorstore, package_name):
-   #    """Searches for relevant documentation based on the query."""
-   #    # Query using RAG
-   #    # query = ""
-   #    # if package_name == "pyod":
-   #    #    query = f"class pyod.models.{algorithm}.{algorithm}"
-   #    # else:
-   #    #    query = f"class pygod.detector.{algorithm}"
-   #    # doc_list = vectorstore.similarity_search(query, k=3)
-   #    # algorithm_doc = "\n\n".join([doc.page_content for doc in doc_list])
-
-   #    client = OpenAI()
-   #    response = client.responses.create(
-   #       model="gpt-4o",
-   #       tools=[{"type": "web_search_preview"}],
-   #       input= web_search_prompt.invoke({"algorithm_name": algorithm}).to_string(),
-   #       max_output_tokens=2024
-   #    )
-   #    algorithm_doc = response.output_text
-   #    if not algorithm_doc:
-   #       print("Error in response "+ algorithm)
-   #       print(response)
-   #    return algorithm_doc
-   def query_docs(self, algorithm, vectorstore, package_name,cache_path = "cache.json"):
-      """Searches for relevant documentation with caching, expiration, and thread-safe cache writes."""
-
-      lock_path = cache_path + ".lock"
-      lock = FileLock(lock_path)
-
-      # Step 1: Ensure cache file exists
-      if not os.path.exists(cache_path):
-         with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump({}, f)
-
-      # Step 2: Use lock to safely read and write to cache
-      with lock:
-         # Load cache
-         with open(cache_path, "r", encoding="utf-8") as f:
-            try:
-                  cache = json.load(f)
-            except json.JSONDecodeError:
-                  print("[Cache Error] cache.json is corrupted. Reinitializing...")
-                  cache = {}
-
-         # Check cache entry
-         if algorithm in cache:
-            try:
-                  cached_time = datetime.fromisoformat(cache[algorithm]["query_datetime"])
-                  if datetime.now() - cached_time < timedelta(days=7):
-                     print(f"[Cache Hit] Using recent cache for {algorithm}")
-                     return cache[algorithm]["document"]
-                  else:
-                     print(f"[Cache Expired] Re-querying {algorithm}")
-            except Exception:
-                  print(f"[Cache Warning] Datetime parse error for {algorithm}, re-querying.")
-
-      # Step 3: Run actual query outside lock (non-blocking for others)
-      client = OpenAI()
-      response = client.responses.create(
-         model="gpt-4o",
-         tools=[{"type": "web_search_preview"}],
-         input=web_search_prompt.invoke({"algorithm_name": algorithm}).to_string(),
-         max_output_tokens=2024
-      )
-      algorithm_doc = response.output_text
-
-      if not algorithm_doc:
-         print("Error in response for " + algorithm)
-         print(response)
-         return ""
-
-      # Step 4: Re-lock and write updated cache
-      with lock:
-         with open(cache_path, "r", encoding="utf-8") as f:
-            try:
-                  cache = json.load(f)
-            except json.JSONDecodeError:
-                  cache = {}
-
-         cache[algorithm] = {
-            "query_datetime": datetime.now().isoformat(),
-            "document": algorithm_doc
-         }
-
-         with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(cache, f, ensure_ascii=False, indent=2)
-
-      print(f"[Cache Updated] Stored new documentation for {algorithm}")
-      return algorithm_doc
 
 
 if __name__ == "__main__":

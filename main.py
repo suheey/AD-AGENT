@@ -16,10 +16,12 @@ from langgraph.graph import StateGraph, END
 # ===== Business logic related =====
 from agents.agent_preprocessor import AgentPreprocessor
 from agents.agent_planner import AgentPlanner
+from agents.agent_infominer import AgentInfominer
 from agents.agent_instructor import AgentInstructor
 from agents.agent_reviewer import AgentReviewer
 from entity.code_quality import CodeQuality
 
+'''
 # =================================================================
 # Define full state, adding `results` to store the processing results of all tools
 # =================================================================
@@ -142,6 +144,172 @@ single_tool_graph.add_conditional_edges("decider", check_if_need_rerun, {
     "done": END,
 })
 compiled_single_tool = single_tool_graph.compile()
+'''
+
+from typing import Annotated, Sequence, TypedDict, Any, List, Tuple
+import operator
+
+# =================================================================
+# Define full state, adding `results` and `algorithm_doc`
+# =================================================================
+class FullToolState(TypedDict):
+    messages: Annotated[Sequence[Any], operator.add]
+    current_tool: str
+    input_parameters: dict
+    data_path_train: str
+    data_path_test: str
+    package_name: str
+    agent_infominer: Any
+    agent_instructor: Any
+    agent_reviewer: Any
+    vectorstore: Any
+    code_quality: Any | None
+    should_rerun: bool
+    agent_preprocessor: Any
+    agent_planner: Any | None
+    experiment_config: dict | None
+    results: List[Tuple[str, Any]] | None
+    algorithm_doc: str | None  # New field to store queried documentation
+
+# =================================================================
+# Node: Preprocessor
+# =================================================================
+def call_preprocessor(state: FullToolState) -> dict:
+    preprocessor = state["agent_preprocessor"]
+    print("\n=== [Preprocessor] Starting to process user input ===")
+    preprocessor.run_chatbot()
+    state["experiment_config"] = preprocessor.experiment_config
+    print("\n=== [Preprocessor] User input processing complete ===")
+    return state
+
+# =================================================================
+# Node: Planner
+# =================================================================
+def call_planner(state: FullToolState) -> dict:
+    if state["experiment_config"] is None:
+        raise ValueError("experiment_config not set, please run the preprocessor first!")
+    print("\n=== [Planner] Starting to generate idea space ===")
+    planner_instance = AgentPlanner(state["experiment_config"])
+    state["agent_planner"] = planner_instance
+    state["input_parameters"] = planner_instance.parameters
+    state["data_path_train"] = planner_instance.data_path_train
+    state["data_path_test"] = planner_instance.data_path_test
+    state["package_name"] = planner_instance.package_name
+    state["vectorstore"] = planner_instance.vectorstore
+    print("\n=== [Planner] Idea space generation complete ===")
+    return state
+
+# =================================================================
+# Node: Informiner
+# Queries documentation and updates the state
+# =================================================================
+def call_informiner(state: FullToolState) -> dict:
+    infominer = state["agent_infominer"]
+    algorithm = state["current_tool"]
+    vectorstore = state["vectorstore"]
+    package_name = state["package_name"]
+
+    print(f"\n=== [Informiner] Querying documentation for {algorithm} ===")
+    doc = infominer.query_docs(algorithm, vectorstore, package_name)
+    print(f"\n=== [Informiner] Documentation retrieved for {algorithm} ===")
+    return {"algorithm_doc": doc}
+
+# =================================================================
+# Node: Instructor
+# Generates and executes code for the selected algorithm
+# =================================================================
+def call_instructor_for_single_tool(state: FullToolState) -> dict:
+    instructor = state["agent_instructor"]
+    tool = state["current_tool"]
+    input_parameters = state["input_parameters"]
+    algorithm_doc = state["algorithm_doc"]
+    data_path_train = state["data_path_train"]
+    data_path_test = state["data_path_test"]
+    package_name = state["package_name"]
+
+    if not state["code_quality"]:
+        print(f"\n=== [Instructor] Processing {tool} (first execution) ===")
+        code = instructor.generate_code(
+            algorithm=tool,
+            data_path_train=data_path_train,
+            data_path_test=data_path_test,
+            algorithm_doc=algorithm_doc,
+            input_parameters=input_parameters,
+            package_name=package_name
+        )
+    else:
+        print(f"\n=== [Instructor] Re-executing updated code for {tool} ===")
+        code = state["code_quality"].code
+
+    new_code_quality = instructor.execute_generated_code(code, tool)
+    if state["code_quality"]:
+        new_code_quality.review_count = state["code_quality"].review_count
+        new_code_quality.algorithm = state["code_quality"].algorithm
+    if not new_code_quality.algorithm:
+        new_code_quality.algorithm = tool
+    return {"code_quality": new_code_quality}
+
+# =================================================================
+# Node: Reviewer
+# Reviews code and makes revisions if errors exist
+# =================================================================
+def call_reviewer_for_single_tool(state: FullToolState) -> dict:
+    reviewer = state["agent_reviewer"]
+    code_quality = state["code_quality"]
+    tool = state["current_tool"]
+    algorithm_doc = state["algorithm_doc"]
+
+    print(f"\n=== [Reviewer] Reviewing code for {tool} ===")
+    if code_quality.error_message:
+        code_quality.review_count += 1
+        revised_code = reviewer.review_code(
+            code_quality=code_quality,
+            vectorstore=state["vectorstore"],
+            algorithm_doc=algorithm_doc
+        )
+        code_quality.code = revised_code
+    return {"code_quality": code_quality}
+
+# =================================================================
+# Node: Decider
+# Determines whether to re-run the instructor
+# =================================================================
+def decide_reviewer_result(state: FullToolState) -> dict:
+    code_quality = state["code_quality"]
+    if code_quality.error_message and code_quality.review_count < 2:
+        return {"should_rerun": True}
+    else:
+        return {"should_rerun": False}
+
+# Conditional edge selector for rerun logic
+def check_if_need_rerun(state: FullToolState):
+    return "need_rerun" if state["should_rerun"] else "done"
+
+# =================================================================
+# Build StateGraph for single-tool processing
+# informiner → instructor → reviewer → decider
+# =================================================================
+
+single_tool_graph = StateGraph(FullToolState)
+
+# Add nodes
+single_tool_graph.add_node("informiner", call_informiner)
+single_tool_graph.add_node("instructor", call_instructor_for_single_tool)
+single_tool_graph.add_node("reviewer", call_reviewer_for_single_tool)
+single_tool_graph.add_node("decider", decide_reviewer_result)
+
+# Define flow
+single_tool_graph.set_entry_point("informiner")
+single_tool_graph.add_edge("informiner", "instructor")
+single_tool_graph.add_edge("instructor", "reviewer")
+single_tool_graph.add_edge("reviewer", "decider")
+single_tool_graph.add_conditional_edges("decider", check_if_need_rerun, {
+    "need_rerun": "instructor",
+    "done": END,
+})
+
+# Compile the graph
+compiled_single_tool = single_tool_graph.compile()
 
 # =================================================================
 # 4. Node: Process all tools (parallel or sequential)
@@ -208,6 +376,7 @@ async def main():
         os.remove("train_data_loader.py")
     if os.path.exists("test_data_loader.py"):
         os.remove("test_data_loader.py")
+    infominer_instance = AgentInfominer()
     instructor_instance = AgentInstructor()
     reviewer_instance = AgentReviewer()
     preprocessor_instance = AgentPreprocessor()
@@ -218,6 +387,7 @@ async def main():
         "input_parameters": {},
         "data_path_train": "",
         "data_path_test": "",
+        "agent_infominer": infominer_instance,
         "agent_instructor": instructor_instance,
         "agent_reviewer": reviewer_instance,
         "vectorstore": None,
@@ -227,6 +397,7 @@ async def main():
         "agent_planner": None,
         "experiment_config": None,
         "results": None,
+        "algorithm_doc": None,
     }
     
     print("\n=== [Main] Starting full process graph ===")
@@ -242,7 +413,7 @@ async def main():
     for tool, tool_state in results:
         code_quality = tool_state.get("code_quality")
         if code_quality and not code_quality.error_message:
-            print(f"[{tool}] Success, AUROC: {code_quality.auroc:.4f}, AUPRC: {code_quality.auprc:.4f}, Error Points: {code_quality.error_points}")
+            print(f"[{tool}] Success, AUROC: {code_quality.auroc:.4f}, AUPRC: {code_quality.auprc:.4f}, Error Points: {[]}")
         else:
             err_msg = code_quality.error_message if code_quality else "Unknown"
             print(f"[{tool}] Failed, error message: {err_msg}")
