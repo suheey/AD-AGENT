@@ -14,7 +14,7 @@ class AgentSelector:
       self.data_path_train = user_input['dataset_train']
       self.data_path_test = user_input['dataset_test']
 
-      self.load_data()
+      self.load_data(self.data_path_train, self.data_path_test)
 
       # self.package_name = "pygod" if user_input['dataset_train'].endswith(".pt") else "pyod"
       self.package_name = "pygod" if type(self.y_train) is str and self.y_train == 'graph' else "pyod"
@@ -24,9 +24,9 @@ class AgentSelector:
       self.documents = self.load_and_split_documents()
       self.vectorstore = self.build_vectorstore(self.documents)
 
-    def load_data(self):
-      train_loader = DataLoader(user_input['dataset_train'], store_script=True, store_path='train_data_loader.py')
-      test_loader = DataLoader(user_input['dataset_test'], store_script=True, store_path='test_data_loader.py')
+    def load_data(self, train_path, test_path):
+      train_loader = DataLoader(train_path, store_script=True, store_path='train_data_loader.py')
+      test_loader = DataLoader(test_path, store_script=True, store_path='test_data_loader.py')
 
       X_train, y_train = train_loader.load_data(split_data=False)
       X_test, y_test = test_loader.load_data(split_data=False)
@@ -68,6 +68,14 @@ class AgentSelector:
       return algorithm_input
 
 if __name__ == "__main__":
+  if os.path.exists("train_data_loader.py"):
+    os.remove("train_data_loader.py")
+  if os.path.exists("test_data_loader.py"):
+    os.remove("test_data_loader.py")
+  if os.path.exists("head_train_data_loader.py"):
+    os.remove("head_train_data_loader.py")
+  if os.path.exists("head_test_data_loader.py"):
+    os.remove("head_test_data_loader.py")
   import sys
   sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
   from config.config import Config
@@ -75,8 +83,8 @@ if __name__ == "__main__":
 
   user_input = {
     "algorithm": ["ALL"],
-    "dataset_train": "./data/inj_cora_train.pt",
-    "dataset_test": "./data/inj_cora_test.pt",
+    "dataset_train": "./data/glass_train.mat",
+    "dataset_test": "./data/glass_test.mat",
     "parameters": {
       "contamination": 0.1
     }

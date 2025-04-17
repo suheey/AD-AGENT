@@ -114,8 +114,7 @@ Write a Python script that:
     - `pandas.read_csv("{file_path}")` for `.csv`
     - `json.load(open("{file_path}", 'r'))` for `.json`
     - `torch.load("{file_path}", weights_only=False)` for `.pt`
-5. After loading, print the available keys or columns in the data.
-6. Dynamically identify and extract `X` and `y`:
+5. Dynamically identify and extract `X` and `y`:
     - If the dataset is **unsupervised**, set `y = "Unsupervised"` and only extract `X`.
     - Use the following head preview to decide which columns or keys represent features (X) and which represent labels (y):
         ------
@@ -133,7 +132,6 @@ Write a Python script that:
 
 7.
     - Ensure `X` is a 2D NumPy array. If `y` is present and numeric, ensure it is 1D.
-    - Print `X.shape` and `y.shape` (or the string "Unsupervised") at the end.
     - Avoid ambiguous NumPy conditions. Do not use if X, if y, or similar conditions that rely on the truth value of a NumPy array. Instead, check for X is not None, y is not None, or use X.shape, len(X), or X.size explicitly.
     - If a key (like 'X' or 'y') is missing, do not assign default arrays like np.array([]). Instead, set X = np.empty((0, 0)) or raise an informative warning.
 8. Ensure the script runs correctly when executed like:

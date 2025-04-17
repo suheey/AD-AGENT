@@ -251,6 +251,10 @@ async def main():
         os.remove("train_data_loader.py")
     if os.path.exists("test_data_loader.py"):
         os.remove("test_data_loader.py")
+    if os.path.exists("head_train_data_loader.py"):
+        os.remove("head_train_data_loader.py")
+    if os.path.exists("head_test_data_loader.py"):
+        os.remove("head_test_data_loader.py")
     infominer_instance = AgentInfominer()
     instructor_instance = AgentInstructor()
     reviewer_instance = AgentReviewer()
