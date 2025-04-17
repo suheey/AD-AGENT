@@ -46,7 +46,9 @@ class DataLoader:
         If the file is graph data (e.g., a .pt file containing a PyTorch Geometric Data object), do not try to load or inspect the data. Just generate this line of code:
         head = "graph"  
         Do not include any other imports, file loading logic, or extra code. Only output this one line.
-
+        Do not include any print
+        You need to add type(y) is str before this y != "Unsupervised" 
+        
         **Example Code Execution:**
         The generated script will be executed like this:
         
