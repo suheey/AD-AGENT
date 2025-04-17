@@ -35,13 +35,15 @@ IMPORTANT:
 """)
 
 class AgentReviewer:
-    def review_code(self,code_quality, vectorstore):
+    def __init__(self):
+        pass
+    def review_code(self,code_quality, vectorstore, algorithm_doc):
         
         revised_code = ""
 
         if code_quality.error_message != "" and code_quality.review_count < 2:
             print(f"\n=== [Reviewer] Error detected in {code_quality.algorithm} ===")
-            algorithm_doc = self.query_docs(code_quality.algorithm, vectorstore)
+            # algorithm_doc = self.query_docs(code_quality.algorithm, vectorstore)
             print(f"\n=== [Reviewer] Regenerate code for {code_quality.algorithm} ===\n")
             revised_code = llm.invoke(
                 template.invoke({

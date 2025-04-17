@@ -6,6 +6,9 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from entity.code_quality import CodeQuality
 import subprocess
+from datetime import datetime, timedelta
+import json
+from filelock import FileLock
 from openai import OpenAI
 import os
 from config.config import Config
@@ -176,11 +179,8 @@ class AgentInstructor:
       clean_code = re.sub(r"```", "", clean_code)
       return clean_code.strip()
 
-   def generate_code(self, algorithm, data_path_train="./data/glass_train.mat",data_path_test = "./data/glass_test.mat", vectorstore=None, input_parameters = {},package_name = None):
+   def generate_code(self, algorithm, data_path_train="./data/glass_train.mat",data_path_test = "./data/glass_test.mat", algorithm_doc = "", input_parameters = {},package_name = None):
       """Generates Python code for anomaly detection using PyOD, using external documentation."""
-      algorithm_doc = self.query_docs(algorithm, vectorstore, package_name)
-      print("\n=== Extracted Documentation ===\n")
-      print(algorithm_doc)
       generated_code = ""
       if package_name == "pyod":
          generated_code = llm.invoke(
@@ -205,43 +205,20 @@ class AgentInstructor:
 
 
       return self.clean_generated_code(generated_code)
-   def query_docs(self, algorithm, vectorstore, package_name):
-      """Searches for relevant documentation based on the query."""
-      # Query using RAG
-      query = ""
-      if package_name == "pyod":
-         query = f"class pyod.models.{algorithm}.{algorithm}"
-      else:
-         query = f"class pygod.detector.{algorithm}"
-      doc_list = vectorstore.similarity_search(query, k=3)
-      algorithm_doc = "\n\n".join([doc.page_content for doc in doc_list])
-
-      # client = OpenAI()
-      # response = client.responses.create(
-      #    model="gpt-4o",
-      #    tools=[{"type": "web_search_preview"}],
-      #    input= web_search_prompt.invoke({"algorithm_name": algorithm}).to_string(),
-      #    max_output_tokens=2024
-      # )
-      # algorithm_doc = response.output_text
-      # if not algorithm_doc:
-      #    print("Error in response "+ algorithm)
-      #    print(response)
-      return algorithm_doc
 
 
 if __name__ == "__main__":
    agentInstructor = AgentInstructor()
-   from agent_planner import AgentPlanner
+   from agents.agent_selector import AgentSelector
    user_input = {
       "algorithm": ["CARD"],
       "dataset_train": "./data/inj_cora_train.pt",
       "dataset_test": "./data/inj_cora_test.pt",
       "parameters": {}
    }
-   agentPlanner = AgentPlanner(user_input=user_input)# if want to unit test, please import AgentPlanner
-   vectorstore = agentPlanner.vectorstore
+   agentSelector = AgentSelector(user_input=user_input)# if want to unit test, please import AgentSelector
+   vectorstore = agentSelector.vectorstore
 
-   code = agentInstructor.generate_code(algorithm=agentPlanner.tools[0], data_path_train = agentPlanner.data_path_train, data_path_test=agentPlanner.data_path_test, vectorstore = vectorstore, input_parameters = agentPlanner.parameters, package_name = agentPlanner.package_name)
+   code = agentInstructor.generate_code(algorithm=agentSelector.tools[0], data_path_train = agentSelector.data_path_train, data_path_test=agentSelector.data_path_test, vectorstore = vectorstore, input_parameters = agentSelector.parameters, package_name = agentSelector.package_name)
 
-   print(agentInstructor.execute_generated_code(code,agentPlanner.tools[0]))
+   print(agentInstructor.execute_generated_code(code,agentSelector.tools[0]))

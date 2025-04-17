@@ -75,7 +75,7 @@ You can also run the system with natural-language-like test commands.
 #pyod
 Run IForest on ./data/glass_train.mat and ./data/glass_test.mat with contamination=0.1
 #pygod
-Run DOMINANT on  ./data/inj_cora_train.pt and ./data/inj_cora_test.pt
+Run DOMINANT on ./data/inj_cora_train.pt and ./data/inj_cora_test.pt
 ```
 
 ### Run All Algorithms
