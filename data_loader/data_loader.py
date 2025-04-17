@@ -72,7 +72,8 @@ class DataLoader:
             messages=[
                 {"role": "system", "content": "You are an expert Python developer."},
                 {"role": "user", "content": prompt}
-            ]
+            ],
+            temperature=0,
         )
 
         # Extract only the Python code using regex
@@ -155,7 +156,8 @@ Do not generate conditional logic to check the file type. The file extension is 
             messages=[
                 {"role": "system", "content": "You are an expert Python developer."},
                 {"role": "user", "content": prompt}
-            ]
+            ],
+            temperature=0,
         )
 
         # Extract only the Python code using regex
@@ -217,7 +219,8 @@ Do not generate if statment code for file type because file type is already give
             messages=[
                 {"role": "system", "content": "You are an expert Python developer."},
                 {"role": "user", "content": prompt}
-            ]
+            ],
+            temperature=0,
         )
 
         # Extract only the Python code using regex
