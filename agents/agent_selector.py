@@ -2,6 +2,10 @@ from langchain_community.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from data_loader.data_loader import DataLoader
 
 
 class AgentSelector:
@@ -9,10 +13,27 @@ class AgentSelector:
       self.parameters = user_input['parameters']
       self.data_path_train = user_input['dataset_train']
       self.data_path_test = user_input['dataset_test']
-      self.package_name = "pygod" if user_input['dataset_train'].endswith(".pt") else "pyod"
+
+      self.load_data()
+
+      # self.package_name = "pygod" if user_input['dataset_train'].endswith(".pt") else "pyod"
+      self.package_name = "pygod" if type(self.y_train) is str and self.y_train == 'graph' else "pyod"
+      # print(f"Package name: {self.package_name}")
+
       self.tools = self.generate_tools(user_input['algorithm'])
       self.documents = self.load_and_split_documents()
       self.vectorstore = self.build_vectorstore(self.documents)
+
+    def load_data(self):
+      train_loader = DataLoader(user_input['dataset_train'], store_script=True, store_path='train_data_loader.py')
+      test_loader = DataLoader(user_input['dataset_test'], store_script=True, store_path='test_data_loader.py')
+
+      X_train, y_train = train_loader.load_data(split_data=False)
+      X_test, y_test = test_loader.load_data(split_data=False)
+      self.X_train = X_train
+      self.y_train = y_train
+      self.X_test = X_test
+      self.y_test = y_test
 
     def load_and_split_documents(self,folder_path="./docs"):
       """
@@ -54,8 +75,8 @@ if __name__ == "__main__":
 
   user_input = {
     "algorithm": ["ALL"],
-    "dataset_train": "./data/glass_train.pt",
-    "dataset_test": "./data/glass_test.pt",
+    "dataset_train": "./data/inj_cora_train.pt",
+    "dataset_test": "./data/inj_cora_test.pt",
     "parameters": {
       "contamination": 0.1
     }

@@ -87,7 +87,7 @@ class DataLoader:
                 f.write(extracted_code)
 
         # Print the generated script
-        print("Generated Script:\n", extracted_code)
+        # print("Generated Script:\n", extracted_code)
 
         return extracted_code
 
@@ -172,7 +172,7 @@ Do not generate conditional logic to check the file type. The file extension is 
                 f.write(extracted_code)
 
         # Print the generated script
-        print("Generated Script:\n", extracted_code)
+        # print("Generated Script:\n", extracted_code)
 
         return extracted_code
 
@@ -234,7 +234,7 @@ Do not generate if statment code for file type because file type is already give
                 f.write(extracted_code)
 
         # Print the generated script
-        print("Generated Script:\n", extracted_code)
+        # print("Generated Script:\n", extracted_code)
 
         return extracted_code
     
@@ -249,7 +249,7 @@ Do not generate if statment code for file type because file type is already give
         else:
             head_script = self.generate_script_for_data_head()
 
-        print("Head Script:\n", head_script)
+        # print("Head Script:\n", head_script)
         
         local_namespace = {}
         try:
@@ -261,7 +261,7 @@ Do not generate if statment code for file type because file type is already give
 
             # Print the extracted data
             if head is not None:
-                print("✅ Extracted head:\n", head)
+                # print("✅ Extracted head:\n", head)
                 self.head = head
             else:
                 print("⚠️ Warning: 'head' not found in the file.")
@@ -270,10 +270,8 @@ Do not generate if statment code for file type because file type is already give
             return None, None
 
         if self.store_script and self.store_path and os.path.exists(self.store_path):
-            print('loading from stored script...')
             generated_script = open(self.store_path).read()
         else:
-            print('generating script...')
             if self.head == 'graph':
                 generated_script = self.generate_graph_script()
             else:
@@ -293,25 +291,25 @@ Do not generate if statment code for file type because file type is already give
 
 
             # Print the extracted data
-            if X is not None:
-                print("✅ Extracted X:\n", X)
-            else:
-                print("⚠️ Warning: 'X' not found in the file.")
+            # if X is not None:
+            #     print("✅ Extracted X:\n", X)
+            # else:
+            #     print("⚠️ Warning: 'X' not found in the file.")
             
             if type(y) is str and y == 'graph':
                 return X, y
             
             if type(y) is str and y == 'Unsupervised':
-                print("✅ Extracted y as 'Unsupervised'.")
+                # print("✅ Extracted y as 'Unsupervised'.")
                 if split_data:
                     return X, None, None, None
                 else:
                     return X, None
 
-            if y is not None:
-                print("✅ Extracted y:\n", y)
-            else:
-                print("⚠️ Warning: 'y' not found in the file.")
+            # if y is not None:
+            #     print("✅ Extracted y:\n", y)
+            # else:
+            #     print("⚠️ Warning: 'y' not found in the file.")
 
             # Reshape y properly
             if y.shape[0] == 1 and y.shape[1] == X.shape[0]:  # If y is (1, N), reshape to (N, 1)
@@ -324,10 +322,8 @@ Do not generate if statment code for file type because file type is already give
 
             # Ensure X and y now have matching samples
             
-            print('split_data:',split_data)
             if split_data:
                 # Split the data into training and testing sets
-                print('splitting data...')
                 if X.shape[0] != y.shape[0]:
                     print(f"❌ Error: Mismatched samples. X has {X.shape[0]} rows, y has {y.shape[0]} rows.")
                     return None, None, None, None
