@@ -132,14 +132,15 @@ Write a Python script that:
 7.
     - Ensure `X` is a 2D NumPy array. If `y` is present and numeric, ensure it is 1D.
     - Print `X.shape` and `y.shape` (or the string "Unsupervised") at the end.
-    - Avoid ambiguous NumPy conditions (do not use `if y` or `if X` directly).
+    - Avoid ambiguous NumPy conditions. Do not use if X, if y, or similar conditions that rely on the truth value of a NumPy array. Instead, check for X is not None, y is not None, or use X.shape, len(X), or X.size explicitly.
+    - If a key (like 'X' or 'y') is missing, do not assign default arrays like np.array([]). Instead, set X = np.empty((0, 0)) or raise an informative warning.
 8. Ensure the script runs correctly when executed like:
 
         exec(generated_script, {{}}, local_namespace)
         X = local_namespace.get("X")
         y = local_namespace.get("y")
 
-Do not generate if statment code for file type because file type is already given.
+Do not generate conditional logic to check the file type. The file extension is already known at the time of code generation. Generate code specifically for the given file type without using if or elif statements.
 
 **Return only the Python code.**
 """
@@ -243,10 +244,12 @@ Do not generate if statment code for file type because file type is already give
         The script is dynamically generated to include necessary imports and extract 'X' and 'y'.
         """
 
-        if 'head_' + self.store_path and os.path.exists('head_' + self.store_path):
+        if self.store_script and  'head_' + self.store_path and os.path.exists('head_' + self.store_path):
             head_script = open('head_' + self.store_path).read()
         else:
             head_script = self.generate_script_for_data_head()
+
+        print("Head Script:\n", head_script)
         
         local_namespace = {}
         try:
@@ -266,8 +269,7 @@ Do not generate if statment code for file type because file type is already give
             print(f"❌ Error executing the generated script: {e}")
             return None, None
 
-        
-        if self.store_path and os.path.exists(self.store_path):
+        if self.store_script and self.store_path and os.path.exists(self.store_path):
             print('loading from stored script...')
             generated_script = open(self.store_path).read()
         else:
@@ -289,15 +291,16 @@ Do not generate if statment code for file type because file type is already give
             X = local_namespace.get("X")
             y = local_namespace.get("y")
 
+
             # Print the extracted data
             if X is not None:
                 print("✅ Extracted X:\n", X)
             else:
                 print("⚠️ Warning: 'X' not found in the file.")
             
-            if y == 'graph':
+            if type(y) is str and y == 'graph':
                 return X, y
-
+            
             if type(y) is str and y == 'Unsupervised':
                 print("✅ Extracted y as 'Unsupervised'.")
                 if split_data:
@@ -343,8 +346,10 @@ Do not generate if statment code for file type because file type is already give
 
 if __name__ == "__main__":
     # Example usage
-    data_loader = DataLoader("data/inj_cora_train.pt", store_script=True)
-    X_train, y_train = data_loader.load_data(split_data=True)
+    data_loader = DataLoader("data/inj_cora_train.pt", store_script=False)
+    X_train, y_train = data_loader.load_data(split_data=False)
 
     print(X_train)
     print(y_train)
+
+    #Run IForest on ./data/glass_train.mat and ./data/glass_test.mat with contamination=0.1
