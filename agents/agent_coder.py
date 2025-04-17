@@ -90,7 +90,7 @@ web_search_prompt = PromptTemplate.from_template("""
    Briefly return realted document content.
 """)
 
-class AgentInstructor:
+class AgentCoder:
    def __init__(self):
       pass
    
@@ -208,7 +208,7 @@ class AgentInstructor:
 
 
 if __name__ == "__main__":
-   agentInstructor = AgentInstructor()
+   agentCoder = AgentCoder()
    from agents.agent_selector import AgentSelector
    user_input = {
       "algorithm": ["CARD"],
@@ -219,6 +219,6 @@ if __name__ == "__main__":
    agentSelector = AgentSelector(user_input=user_input)# if want to unit test, please import AgentSelector
    vectorstore = agentSelector.vectorstore
 
-   code = agentInstructor.generate_code(algorithm=agentSelector.tools[0], data_path_train = agentSelector.data_path_train, data_path_test=agentSelector.data_path_test, vectorstore = vectorstore, input_parameters = agentSelector.parameters, package_name = agentSelector.package_name)
+   code = agentCoder.generate_code(algorithm=agentSelector.tools[0], data_path_train = agentSelector.data_path_train, data_path_test=agentSelector.data_path_test, vectorstore = vectorstore, input_parameters = agentSelector.parameters, package_name = agentSelector.package_name)
 
-   print(agentInstructor.execute_generated_code(code,agentSelector.tools[0]))
+   print(agentCoder.execute_generated_code(code,agentSelector.tools[0]))
