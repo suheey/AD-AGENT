@@ -32,9 +32,9 @@ python -m venv .venv
 ### 3. Install Dependencies
 
 ```bash
-pip install -r requirements.txt
-
 pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.5.0+cpu.html
+
+pip install -r requirements.txt
 ```
 
 ### 4. Set Your OpenAI API Key
