@@ -29,8 +29,8 @@ You are an expert Python developer with deep experience in anomaly detection lib
 --- END DOCUMENTATION ---
 
 4. The code should:
-   (1) import sys, os and include command `sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))`
-   (2) Import DataLoader using following commend `from data_loader.data_loader import DataLoader`
+   (1) import sys, os and include command `sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))` in the head
+   (2) import DataLoader using following commend `from data_loader.data_loader import DataLoader` after (1)
    (3) Initialize DataLoader using statement `dataloader_train = DataLoader(filepath = {data_path_train}, store_script=True, store_path = 'train_data_loader.py')` & `dataloader_test = DataLoader(filepath = {data_path_test}, store_script=True, store_path = 'test_data_loader.py')`
    (4) Use the statement `X_train, y_train = dataloader_train.load_data(split_data=False)` & `X_test, y_test = dataloader_train.load_data(split_data=False)` to generate variables X_train, y_train, X_test, y_test; 
    (5) Initialize the specified algorithm `{algorithm}` strictly following the provided documentation and train the model with `X_train`
@@ -84,132 +84,78 @@ IMPORTANT:
 """)
 
 
-web_search_prompt = PromptTemplate.from_template("""
-   You are a machine learning expert and will assist me with researching a specific use of a deep learning model in PyOD. Here is the official document you should refer to: https://pyod.readthedocs.io/en/latest/pyod.models.html
-   I want to run `{algorithm_name}`. What is the Initialization function, parameters and Attributes? 
-   Briefly return realted document content.
+template_fix = PromptTemplate.from_template("""
+You are an expert Python developer with deep experience in anomaly detection libraries.
+
+Here is the original code that raised an error:
+--- Original Code ---
+{code}
+
+--- Error Message ---
+{error_message}
+
+Official documentation for `{algorithm}`:
+--- BEGIN DOCUMENTATION ---
+{algorithm_doc}
+--- END DOCUMENTATION ---
+
+Task:
+1. Analyse the error and fix it strictly according to the doc.
+2. Output **executable** Python ONLY, no comments/explanations.
 """)
 
-class AgentInstructor:
-   def __init__(self):
-      pass
-   
-   def execute_generated_code(self,code: str,algorithm_name):
+# ---------- CLASS ----------
+class AgentCoder:
+    """Now responsible for code generation **and** modification."""
+    def __init__(self):
+        pass
 
-      folder_path = "./generated_scripts"
-      os.makedirs(folder_path, exist_ok=True)
-
-      file_path = os.path.join(folder_path, f"{algorithm_name}.py")
-
-      with open(file_path, "w") as script_file:
-            script_file.write(code)
-      try:
-         result = subprocess.run(
-               ["python", file_path],
-               capture_output=True,
-               text=True
-         )
-         print("\n=== Coding Output ===\n")
-         print(result.stdout)
-         print(result.stderr)
-
-         if result.returncode != 0:
-            return CodeQuality(
-               code=code,
-               algorithm=None,
-               error_message= result.stderr,
-               auroc=-1,
-               auprc=-1,
-               error_points=[],
-               review_count=0
-            )
-         else:
-            auroc, auprc, error_points = self.extract_eval(result.stdout)
-            return CodeQuality(
-               code=code,
-               algorithm=None,
-               error_message="",
-               auroc=auroc,
-               auprc=auprc,
-               error_points=error_points, # list of dicts with point and true_label
-               review_count=0
-            )
-      except Exception as e:
-         print(str(e))
-         return CodeQuality(
-            code=code,
-            algorithm=None,
-            error_message=str(e),
-            auroc=-1,
-            auprc=-1,
-            error_points=[],
-            review_count=0
-         )
-      
-      
-   def extract_eval(self,output: str):
-      auroc = -1
-      auprc = -1
-      error_points = []
-
-      for line in output.splitlines():
-         if "AUROC:" in line:
-            match = re.search(r"AUROC:\s*([\d.]+)", line)
-            if match:
-               auroc = float(match.group(1))
-         elif "AUPRC:" in line:
-            match = re.search(r"AUPRC:\s*([\d.]+)", line)
-            if match:
-               auprc = float(match.group(1))
-         elif "Failed prediction at point" in line:
-            match = re.search(r"Failed prediction at point \[([^\]]+)\] with true label ([\d\.]+)\.?", line)
-            if match:
-               numbers_str = match.group(1)
-               true_label = float(match.group(2))
-               numbers = [float(num.strip()) for num in numbers_str.split(',')]
-               error_points.append({
-                     "point": numbers,
-                     "true_label": true_label
-               })
-      return auroc, auprc, error_points
-   
-   def clean_generated_code(self, code):
-      """Removes Markdown code block formatting from LLM output."""
-      clean_code = re.sub(r"```(python)?", "", code)
-      clean_code = re.sub(r"```", "", clean_code)
-      return clean_code.strip()
-
-   def generate_code(self, algorithm, data_path_train="./data/glass_train.mat",data_path_test = "./data/glass_test.mat", algorithm_doc = "", input_parameters = {},package_name = None):
-      """Generates Python code for anomaly detection using PyOD, using external documentation."""
-      generated_code = ""
-      if package_name == "pyod":
-         generated_code = llm.invoke(
-            template_pyod.invoke({
-                  "algorithm": algorithm,
-                  "data_path_train": data_path_train,
-                  "data_path_test": data_path_test,
-                  "algorithm_doc": algorithm_doc,
-                  "parameters": str(input_parameters)
+    # -------- generation --------
+    def generate_code(
+        self,
+        algorithm,
+        data_path_train,
+        data_path_test,
+        algorithm_doc,
+        input_parameters,
+        package_name
+    ) -> str:
+        tpl = template_pyod if package_name == "pyod" else template_pygod
+        raw = llm.invoke(
+            tpl.invoke({
+                "algorithm": algorithm,
+                "data_path_train": data_path_train,
+                "data_path_test": data_path_test,
+                "algorithm_doc": algorithm_doc,
+                "parameters": str(input_parameters)
             })
-         ).content
-      else:
-         generated_code = llm.invoke(
-            template_pygod.invoke({
-                  "algorithm": algorithm,
-                  "data_path_train": data_path_train,
-                  "data_path_test": data_path_test,
-                  "algorithm_doc": algorithm_doc,
-                  "parameters": str(input_parameters)
+        ).content
+        return self._clean(raw)
+
+    # -------- revision (moved from old Reviewer) --------
+    def revise_code(self, code_quality: CodeQuality, algorithm_doc: str) -> str:
+        fixed = llm.invoke(
+            template_fix.invoke({
+                "code": code_quality.code,
+                "error_message": code_quality.error_message,
+                "algorithm": code_quality.algorithm,
+                "algorithm_doc": algorithm_doc
             })
-         ).content
+        ).content
+        # increase review counter here
+        code_quality.review_count += 1
+        return self._clean(fixed)
 
-
-      return self.clean_generated_code(generated_code)
-
+    # -------- util --------
+    @staticmethod
+    def _clean(code: str) -> str:
+        code = re.sub(r"```(python)?", "", code)
+        return re.sub(r"```", "", code).strip()
 
 if __name__ == "__main__":
-   agentInstructor = AgentInstructor()
+   agentCoder = AgentCoder()
    from agents.agent_selector import AgentSelector
+   from agents.agent_infominer import AgentInfominer
    user_input = {
       "algorithm": ["CARD"],
       "dataset_train": "./data/inj_cora_train.pt",
@@ -217,8 +163,16 @@ if __name__ == "__main__":
       "parameters": {}
    }
    agentSelector = AgentSelector(user_input=user_input)# if want to unit test, please import AgentSelector
-   vectorstore = agentSelector.vectorstore
+   AgentInfominer = AgentInfominer()
+   algorithm_doc = AgentInfominer.query_docs(algorithm=agentSelector.tools[0], vectorstore=agentSelector.vectorstore, package_name=agentSelector.package_name)
 
-   code = agentInstructor.generate_code(algorithm=agentSelector.tools[0], data_path_train = agentSelector.data_path_train, data_path_test=agentSelector.data_path_test, vectorstore = vectorstore, input_parameters = agentSelector.parameters, package_name = agentSelector.package_name)
+   code = agentCoder.generate_code(
+      algorithm=user_input["algorithm"][0],
+      data_path_train=user_input["dataset_train"],
+      data_path_test=user_input["dataset_test"],
+      algorithm_doc=algorithm_doc,
+      input_parameters=user_input["parameters"],
+      package_name=agentSelector.package_name
+   )
 
-   print(agentInstructor.execute_generated_code(code,agentSelector.tools[0]))
+   print(code)

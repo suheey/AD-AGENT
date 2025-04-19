@@ -1,77 +1,114 @@
-import re
+import subprocess, os, re, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from entity.code_quality import CodeQuality
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
-# Initialize OpenAI LLM
+
+# Initialize the OpenAI LLM
 llm = ChatOpenAI(model="gpt-4o", temperature=0)
 
-# promt template
-template = PromptTemplate.from_template("""
-You are an expert Python developer with deep experience in anomaly detection libraries.
+# Prompt template for generating synthetic test data
+test_prompt = PromptTemplate.from_template("""
+You will receive a Python script for {package_name} that trains an anomaly‑detection model with real datasets.
 
-You have the following original code (that caused an error) and the corresponding error message:
-
---- Original Code ---
+--- BEGIN CODE ---
 {code}
+--- END CODE ---
+                                           
+TASK:
+1. Replace **all data‑loading operations** (DataLoader, torch.load, np.load, pandas.read*, etc.)
+   with code that creates SMALL synthetic data directly in the script:
+   • For PyOD: generate X_train, y_train, X_test, y_test using `generate_data`; 
+     `from pyod.utils.data import generate_data`
+     `X_train, X_test, y_train, y_test = generate_data(n_train=200, n_test=100, contamination=0.1)`
+   • For PyGOD: build train and test graph follow instruction below;
+     `import torch`
+     `from pygod.generator import gen_contextual_outlier, gen_structural_outlier`
+     `from torch_geometric.data import Data`
+     `num_nodes = 200`  
+     `num_features = 16`  
+     `x = torch.randn(num_nodes, num_features)`  
 
---- Error Message ---
-{error_message}
+     `edge_index = torch.tensor([`  
+     `    [i, (i+1) % num_nodes] for i in range(num_nodes)`  
+     `], dtype=torch.long).T  # shape: [2, num_edges]`  
 
-You also have the official documentation for the `{algorithm}` algorithm as follows:
-
---- BEGIN DOCUMENTATION ---
-{algorithm_doc}
---- END DOCUMENTATION ---
-
-Your task is to:
-1. Analyze the error message to find the cause of the error.
-2. Use the provided official documentation for `{algorithm}` to fix the code accordingly.
-3. Identify the data path from the original code (if any). If no valid data path is found, print an appropriate message.
-4. Write only **executable** Python code for anomaly detection and do not include any explanations or descriptions.
-5. Base your new code strictly original code logic and the official documentation.
-
-IMPORTANT:
-- Do NOT input optional or incorrect parameters.
-- **In your final answer, output only the Python code.**
+     `data = Data(x=x, edge_index=edge_index)`  
+     `data, ya = gen_contextual_outlier(data, n=100, k=50)`  
+     `data, ys = gen_structural_outlier(data, m=10, n=10)`  
+     `data.y = torch.logical_or(ys, ya).long()`  
+2. Keep the variable names and the rest of the logic unchanged.
+3. Output runnable Python **code only** (no explanations, no markdown).
 """)
 
 class AgentReviewer:
+    """Responsible for executing code and recording metrics only."""
     def __init__(self):
         pass
-    def review_code(self,code_quality, vectorstore, algorithm_doc):
-        
-        revised_code = ""
 
-        if code_quality.error_message != "" and code_quality.review_count < 2:
-            print(f"\n=== [Reviewer] Error detected in {code_quality.algorithm} ===")
-            # algorithm_doc = self.query_docs(code_quality.algorithm, vectorstore)
-            print(f"\n=== [Reviewer] Regenerate code for {code_quality.algorithm} ===\n")
-            revised_code = llm.invoke(
-                template.invoke({
-                    "code": code_quality.code,
-                    "error_message": code_quality.error_message,
-                    "algorithm": code_quality.algorithm,
-                    "algorithm_doc": algorithm_doc 
+    def test_code(
+        self,
+        code: str,
+        algorithm_name: str,
+        package_name: str
+    ) -> str:
+        """
+        Generate a test script using synthetic data and execute it.
+        Return an empty string on success, or an error message on failure or exception.
+        """
+        try:
+            # 1) Use LLM to rewrite the script to use synthetic data
+            test_script = llm.invoke(
+                test_prompt.invoke({
+                    "code": code,
+                    "algorithm_name": algorithm_name,
+                    "package_name": package_name
                 })
             ).content
-            revised_code = self.clean_generated_code(revised_code)
-        else:
-            if code_quality.error_message != "" and code_quality.review_count >= 2:
-                print(f"\n=== [Reviewer] Reaching maximum review count ===")
-            revised_code = code_quality.code + "\n# [Reviewer] Code has been reviewed and updated.\n"
-            
-        # with open("reviewed_script.py", "w", encoding="utf-8") as f:
-        #     f.write(revised_code)
+            test_script = self._clean_markdown(test_script)
 
-        return revised_code
-    
-    def query_docs(self, algorithm, vectorstore):
-        """Searches for relevant documentation based on the query."""
-        query = f"class pyod.models.{algorithm}.{algorithm}"
-        doc_list = vectorstore.similarity_search(query, k=5)
-        algorithm_doc = "\n\n".join([doc.page_content for doc in doc_list])
-        return algorithm_doc
-    def clean_generated_code(self, code):
-        """Removes Markdown code block formatting from LLM output."""
-        clean_code = re.sub(r"```(python)?", "", code)
-        clean_code = re.sub(r"```", "", clean_code)
-        return clean_code.strip()
+            # 2) Save the rewritten script to file
+            folder = "generated_scripts"
+            os.makedirs(folder, exist_ok=True)
+            path = os.path.join(folder, f"{algorithm_name}_test.py")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(test_script)
+
+            # 3) Execute the test script
+            res = subprocess.run(["python", path],
+                                 capture_output=True, text=True)
+            print("\n=== Test Execution Output ===\n",
+                  res.stdout, res.stderr)
+
+            if res.returncode != 0:
+                return res.stderr
+            else:
+                return ""
+        except Exception as e:
+            print(f"[test_code] Exception: {e}")
+            return str(e)
+
+    @staticmethod
+    def _clean_markdown(txt: str) -> str:
+        """Remove markdown code fences from the script."""
+        txt = re.sub(r"```(python)?", "", txt)
+        return re.sub(r"```", "", txt).strip()
+
+    # -------- helpers --------
+    @staticmethod
+    def _find(pattern, text, default=-1.0):
+        """Find a float number from text using regex pattern."""
+        m = re.search(pattern, text)
+        return float(m.group(1)) if m else default
+
+    @staticmethod
+    def _find_errors(text):
+        """Extract failed prediction points and true labels from output logs."""
+        pts = []
+        for line in text.splitlines():
+            if "Failed prediction at point" in line:
+                m = re.search(r"\[([^\]]+)] with true label ([\d.]+)", line)
+                if m:
+                    nums = [float(x.strip()) for x in m.group(1).split(",")]
+                    pts.append({"point": nums, "true_label": float(m.group(2))})
+        return pts
