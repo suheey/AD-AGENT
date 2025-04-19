@@ -155,7 +155,7 @@ class AgentCoder:
 if __name__ == "__main__":
    agentCoder = AgentCoder()
    from agents.agent_selector import AgentSelector
-   from agents.agent_infominer import AgentInfominer
+   from agents.agent_infominer import AgentInfoMiner
    user_input = {
       "algorithm": ["CARD"],
       "dataset_train": "./data/inj_cora_train.pt",
@@ -163,8 +163,8 @@ if __name__ == "__main__":
       "parameters": {}
    }
    agentSelector = AgentSelector(user_input=user_input)# if want to unit test, please import AgentSelector
-   AgentInfominer = AgentInfominer()
-   algorithm_doc = AgentInfominer.query_docs(algorithm=agentSelector.tools[0], vectorstore=agentSelector.vectorstore, package_name=agentSelector.package_name)
+   AgentInfominer = AgentInfoMiner()
+   algorithm_doc = AgentInfoMiner.query_docs(algorithm=agentSelector.tools[0], vectorstore=agentSelector.vectorstore, package_name=agentSelector.package_name)
 
    code = agentCoder.generate_code(
       algorithm=user_input["algorithm"][0],

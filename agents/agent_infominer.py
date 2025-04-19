@@ -64,14 +64,14 @@ class AgentInfoMiner:
            
         
         client = OpenAI()
-            prompt_temp = web_search_prompt_pyod if package_name == "pyod" else web_search_prompt_pygod
-            response = client.responses.create(
-                model="gpt-4o",
-                tools=[{"type": "web_search_preview"}],
-                input=prompt_temp.invoke({"algorithm_name": algorithm}).to_string(),
-                max_output_tokens=2024
-            )
-            algorithm_doc = response.output_text
+        prompt_temp = web_search_prompt_pyod if package_name == "pyod" else web_search_prompt_pygod
+        response = client.responses.create(
+            model="gpt-4o",
+            tools=[{"type": "web_search_preview"}],
+            input=prompt_temp.invoke({"algorithm_name": algorithm}).to_string(),
+            max_output_tokens=2024
+        )
+        algorithm_doc = response.output_text
         
 
         # Query using RAG
