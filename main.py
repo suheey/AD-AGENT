@@ -16,7 +16,7 @@ from langgraph.graph import StateGraph, END
 # ===== Business logic related =====
 from agents.agent_preprocessor import AgentPreprocessor
 from agents.agent_selector import AgentSelector
-from agents.agent_infominer import AgentInfominer
+from agents.agent_infoMiner import AgentInfoMiner
 from agents.agent_instructor import AgentInstructor
 from agents.agent_reviewer import AgentReviewer
 from entity.code_quality import CodeQuality
@@ -34,7 +34,7 @@ class FullToolState(TypedDict):
     data_path_train: str
     data_path_test: str
     package_name: str
-    agent_infominer: Any
+    agent_InfoMiner: Any
     agent_instructor: Any
     agent_reviewer: Any
     vectorstore: Any
@@ -75,18 +75,18 @@ def call_selector(state: FullToolState) -> dict:
     return state
 
 # =================================================================
-# Node: Informiner
+# Node: InfoMiner
 # Queries documentation and updates the state
 # =================================================================
-def call_informiner(state: FullToolState) -> dict:
-    infominer = state["agent_infominer"]
+def call_InfoMiner(state: FullToolState) -> dict:
+    InfoMiner = state["agent_InfoMiner"]
     algorithm = state["current_tool"]
     vectorstore = state["vectorstore"]
     package_name = state["package_name"]
 
-    print(f"\n=== [Informiner] Querying documentation for {algorithm} ===")
-    doc = infominer.query_docs(algorithm, vectorstore, package_name)
-    print(f"\n=== [Informiner] Documentation retrieved for {algorithm} ===")
+    print(f"\n=== [InfoMiner] Querying documentation for {algorithm} ===")
+    doc = InfoMiner.query_docs(algorithm, vectorstore, package_name)
+    print(f"\n=== [InfoMiner] Documentation retrieved for {algorithm} ===")
     return {"algorithm_doc": doc}
 
 # =================================================================
@@ -162,20 +162,20 @@ def check_if_need_rerun(state: FullToolState):
 
 # =================================================================
 # Build StateGraph for single-tool processing
-# informiner → instructor → reviewer → decider
+# InfoMiner → instructor → reviewer → decider
 # =================================================================
 
 single_tool_graph = StateGraph(FullToolState)
 
 # Add nodes
-single_tool_graph.add_node("informiner", call_informiner)
+single_tool_graph.add_node("InfoMiner", call_InfoMiner)
 single_tool_graph.add_node("instructor", call_instructor_for_single_tool)
 single_tool_graph.add_node("reviewer", call_reviewer_for_single_tool)
 single_tool_graph.add_node("decider", decide_reviewer_result)
 
 # Define flow
-single_tool_graph.set_entry_point("informiner")
-single_tool_graph.add_edge("informiner", "instructor")
+single_tool_graph.set_entry_point("InfoMiner")
+single_tool_graph.add_edge("InfoMiner", "instructor")
 single_tool_graph.add_edge("instructor", "reviewer")
 single_tool_graph.add_edge("reviewer", "decider")
 single_tool_graph.add_conditional_edges("decider", check_if_need_rerun, {
@@ -255,7 +255,7 @@ async def main():
         os.remove("head_train_data_loader.py")
     if os.path.exists("head_test_data_loader.py"):
         os.remove("head_test_data_loader.py")
-    infominer_instance = AgentInfominer()
+    InfoMiner_instance = AgentInfoMiner()
     instructor_instance = AgentInstructor()
     reviewer_instance = AgentReviewer()
     preprocessor_instance = AgentPreprocessor()
@@ -266,7 +266,7 @@ async def main():
         "input_parameters": {},
         "data_path_train": "",
         "data_path_test": "",
-        "agent_infominer": infominer_instance,
+        "agent_InfoMiner": InfoMiner_instance,
         "agent_instructor": instructor_instance,
         "agent_reviewer": reviewer_instance,
         "vectorstore": None,

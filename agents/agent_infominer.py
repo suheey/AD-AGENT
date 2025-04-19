@@ -21,7 +21,7 @@ web_search_prompt_pygod = PromptTemplate.from_template("""
 """)
 
 
-class AgentInfominer:
+class AgentInfoMiner:
     def __init__(self):
         pass
 
@@ -60,24 +60,28 @@ class AgentInfominer:
                     print(f"[Cache Warning] Datetime parse error for {algorithm}, re-querying.")
 
         # Step 3: Run actual query outside lock (non-blocking for others)
+
+           
+        '''
         client = OpenAI()
-        prompt_temp = web_search_prompt_pyod if package_name == "pyod" else web_search_prompt_pygod
-        response = client.responses.create(
-            model="gpt-4o",
-            tools=[{"type": "web_search_preview"}],
-            input=prompt_temp.invoke({"algorithm_name": algorithm}).to_string(),
-            max_output_tokens=2024
-        )
-        algorithm_doc = response.output_text
+            prompt_temp = web_search_prompt_pyod if package_name == "pyod" else web_search_prompt_pygod
+            response = client.responses.create(
+                model="gpt-4o",
+                tools=[{"type": "web_search_preview"}],
+                input=prompt_temp.invoke({"algorithm_name": algorithm}).to_string(),
+                max_output_tokens=2024
+            )
+            algorithm_doc = response.output_text
+        '''
 
         # Query using RAG
-        # query = ""
-        # if package_name == "pyod":
-        #    query = f"class pyod.models.{algorithm}.{algorithm}"
-        # else:
-        #    query = f"class pygod.detector.{algorithm}"
-        # doc_list = vectorstore.similarity_search(query, k=3)
-        # algorithm_doc = "\n\n".join([doc.page_content for doc in doc_list])
+        query = ""
+        if package_name == "pyod":
+            query = f"class pyod.models.{algorithm}.{algorithm}"
+        else:
+            query = f"class pygod.detector.{algorithm}"
+        doc_list = vectorstore.similarity_search(query, k=3)
+        algorithm_doc = "\n\n".join([doc.page_content for doc in doc_list])
 
         if not algorithm_doc:
             print("Error in response for " + algorithm)
@@ -105,7 +109,7 @@ class AgentInfominer:
         return algorithm_doc
 
 if __name__ == "__main__":
-    agent = AgentInfominer()
+    agent = AgentInfoMiner()
     # Example usage
     algorithm = "lscp"
     vectorstore = None  # Replace with actual vectorstore object
