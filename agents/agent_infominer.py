@@ -62,7 +62,7 @@ class AgentInfoMiner:
         # Step 3: Run actual query outside lock (non-blocking for others)
 
            
-        '''
+        
         client = OpenAI()
             prompt_temp = web_search_prompt_pyod if package_name == "pyod" else web_search_prompt_pygod
             response = client.responses.create(
@@ -72,16 +72,16 @@ class AgentInfoMiner:
                 max_output_tokens=2024
             )
             algorithm_doc = response.output_text
-        '''
+        
 
         # Query using RAG
-        query = ""
-        if package_name == "pyod":
-            query = f"class pyod.models.{algorithm}.{algorithm}"
-        else:
-            query = f"class pygod.detector.{algorithm}"
-        doc_list = vectorstore.similarity_search(query, k=3)
-        algorithm_doc = "\n\n".join([doc.page_content for doc in doc_list])
+        #query = ""
+        #if package_name == "pyod":
+        #    query = f"class pyod.models.{algorithm}.{algorithm}"
+        #else:
+        #    query = f"class pygod.detector.{algorithm}"
+        #doc_list = vectorstore.similarity_search(query, k=3)
+        #algorithm_doc = "\n\n".join([doc.page_content for doc in doc_list])
 
         if not algorithm_doc:
             print("Error in response for " + algorithm)
