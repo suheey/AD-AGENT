@@ -7,10 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from entity.code_quality import CodeQuality
 import subprocess
 from datetime import datetime, timedelta
-import json
-from filelock import FileLock
-from openai import OpenAI
-import os
+import ast
 from config.config import Config
 os.environ['OPENAI_API_KEY'] = Config.OPENAI_API_KEY
 
@@ -33,7 +30,7 @@ You are an expert Python developer with deep experience in anomaly detection lib
    (2) import DataLoader using following commend `from data_loader.data_loader import DataLoader` after (1)
    (3) Initialize DataLoader using statement `dataloader_train = DataLoader(filepath = {data_path_train}, store_script=True, store_path = 'train_data_loader.py')` & `dataloader_test = DataLoader(filepath = {data_path_test}, store_script=True, store_path = 'test_data_loader.py')`
    (4) Use the statement `X_train, y_train = dataloader_train.load_data(split_data=False)` & `X_test, y_test = dataloader_train.load_data(split_data=False)` to generate variables X_train, y_train, X_test, y_test; 
-   (5) Initialize the specified algorithm `{algorithm}` strictly following the provided documentation and train the model with `X_train`
+   (5) Initialize the specified algorithm `{algorithm}` using variable `model`, strictly following the provided documentation and train the model with `X_train`
    (6) Determine whether the following parameters `{parameters}` apply to this initialization function and, if so, add their values ​to the function.
    (7) Use `.decision_scores_` on `X_train` for training outlier scores
        Use `.decision_function(X_test)` for test outlier scores
@@ -67,7 +64,7 @@ You are an expert Python developer with deep experience in anomaly detection lib
    (3) Convert labels in the loaded data by executing:
        `train_data.y = (train_data.y != 0).long()`
        `test_data.y = (test_data.y != 0).long()`
-   (4) Initialize the specified algorithm `{algorithm}` with the provided parameters `{parameters}` (if applicable) strictly following the documentation excerpt.
+   (4) Initialize the specified algorithm `{algorithm}` with the provided parameters `{parameters}`(if parameters applicable) using variable `model`, strictly following the documentation excerpt.
    (5) Train the model using `model.fit(train_data)`.
    (6) Predict on the test data using `pred, score = model.predict(test_data, return_score=True)`.
    (7) Extract the true labels and corresponding scores using the test mask:
@@ -151,6 +148,24 @@ class AgentCoder:
     def _clean(code: str) -> str:
         code = re.sub(r"```(python)?", "", code)
         return re.sub(r"```", "", code).strip()
+    @staticmethod
+    def _extract_init_params_dict(response_text: str) -> dict:
+        """
+        Extract the dictionary in the first code block from the string, returning a Python dictionary object.
+        """
+        # match dictionary in code block
+        match = re.search(r"```python\s*({.*?})\s*```", response_text, re.DOTALL)
+        if not match:
+            return {}
+            # raise ValueError("No dictionary found in code block.")
+        
+        dict_str = match.group(1)
+        try:
+            return ast.literal_eval(dict_str)
+        except Exception as e:
+            return {}
+            # raise ValueError(f"Failed to parse dictionary: {e}")
+        # return {}
 
 if __name__ == "__main__":
    agentCoder = AgentCoder()

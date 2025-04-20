@@ -27,7 +27,7 @@ class AgentEvaluator:
         # If execution failed, return error result
         if res.returncode != 0:
             return CodeQuality(
-                code=code, algorithm=algorithm_name,
+                code=code, algorithm=algorithm_name, parameters={}, std_output="",
                 error_message=res.stderr,
                 auroc=-1, auprc=-1, error_points=[], review_count=0
             )
@@ -39,7 +39,7 @@ class AgentEvaluator:
 
         # Return evaluation result
         return CodeQuality(
-            code=code, algorithm=algorithm_name,
+            code=code, algorithm=algorithm_name, parameters={}, std_output=res.stdout,
             error_message="", auroc=auroc, auprc=auprc,
             error_points=errors, review_count=0
         )
