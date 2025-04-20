@@ -122,4 +122,13 @@ Run all on ./data/glass_train.mat and ./data/glass_test.mat
 - Make sure your dataset is placed inside the `./data/` directory.
 - Modify `main.py` to add support for additional algorithms or datasets if needed.
 
+---
+
+## 👥 Contributors
+
+<a href="https://github.com/USC-FORTIS/OpenAD/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=USC-FORTIS/OpenAD" />
+</a>
+
+Made with [contrib.rocks](https://contrib.rocks).
 
