@@ -1,6 +1,19 @@
 # OpenAD
 
-This repository provides a unified script to run anomaly detection algorithms on `.mat` datasets. It supports both single-algorithm and parallel execution modes, and includes example commands for testing.
+**OpenAD** is a multi-agent anomaly detection platform designed to support the full lifecycle of real-world anomaly detection—from data preprocessing and model selection to detection, explanation, and evaluation. It integrates classical and graph-based AD algorithms with LLM-powered modules for enhanced usability, privacy, and adaptability.
+
+> 🔍 One platform. Multiple agents. All your anomaly detection workflows—automated, explainable, and secure.
+
+---
+
+## 🔧 Features
+
+- **Modular Pipeline Execution**: Supports tabular, sequential, and graph anomaly detection algorithms for more and more complex data types.
+- **Multi-Agent Architecture**: Detection, explanation, and adaptation are handled by decoupled agents with clear APIs and extendability.
+- **LLM Integration** (in progress): Language models assist in tasks such as explanation, synthetic anomaly generation, and interactive debugging.
+- **Privacy-Aware Design** (in progress): Includes a framework for anonymizing data before AD processing, suitable for regulated domains.
+- **Human-in-the-loop Support** (in progress): Enables analysts to query explanations and iterate on detection results interactively.
+
 
 ---
 
