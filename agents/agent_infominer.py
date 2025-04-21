@@ -36,6 +36,19 @@ web_search_prompt_pygod = PromptTemplate.from_template("""
    If any default value is an object or function (e.g., MinMaxScaler()), wrap it in quotes to ensure valid Python syntax for ast.literal_eval.
 """)
 
+web_search_prompt_darts = PromptTemplate.from_template("""
+   You are a machine learning expert and will assist me with researching a specific use of a deep learning model in Darts. Here is the official document you should refer to: https://unit8co.github.io/darts/generated_api/darts.ad.scorers.html
+   I want to run `{algorithm_name}`. What is the Initialization function, parameters and Attributes? 
+   Briefly return realted document content.
+   Then, extract **all parameters** of the `__init__` method for the `{algorithm_name}` class, along with their default values if available, and return a valid Python dictionary string in the following format:
+    ```python
+    {{
+        "param1": default_value1,
+        "param2": default_value2,
+        ...
+    }}
+   If any default value is an object or function (e.g., MinMaxScaler()), wrap it in quotes to ensure valid Python syntax for ast.literal_eval.
+""")
 
 class AgentInfoMiner:
     def __init__(self):
@@ -80,7 +93,7 @@ class AgentInfoMiner:
            
         
         client = OpenAI()
-        prompt_temp = web_search_prompt_pyod if package_name == "pyod" else web_search_prompt_pygod
+        prompt_temp = web_search_prompt_pyod if package_name == "pyod" else (web_search_prompt_pygod if package_name == "pygod" else web_search_prompt_darts)
         response = client.responses.create(
             model="gpt-4o",
             tools=[{"type": "web_search_preview"}],
@@ -127,7 +140,7 @@ class AgentInfoMiner:
 if __name__ == "__main__":
     agent = AgentInfoMiner()
     # Example usage
-    algorithm = "IForest"
+    algorithm = "KMeansScorer"
     vectorstore = None  # Replace with actual vectorstore object
-    package_name = "pyod"
+    package_name = "darts"
     doc = agent.query_docs(algorithm, vectorstore, package_name)

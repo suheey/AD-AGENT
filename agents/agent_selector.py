@@ -14,11 +14,14 @@ class AgentSelector:
       self.data_path_train = user_input['dataset_train']
       self.data_path_test = user_input['dataset_test']
 
-      self.load_data(self.data_path_train, self.data_path_test)
-
-      # self.package_name = "pygod" if user_input['dataset_train'].endswith(".pt") else "pyod"
-      self.package_name = "pygod" if type(self.y_train) is str and self.y_train == 'graph' else "pyod"
-      # print(f"Package name: {self.package_name}")
+      # self.load_data(self.data_path_train, self.data_path_test)
+      if user_input['dataset_train'].endswith(".pt"):
+        self.package_name = "pygod"
+      elif user_input['dataset_train'].endswith(".mat"):
+        self.package_name = "pyod"
+      else:
+        self.package_name = "darts"
+      # self.package_name = "pygod" if type(self.y_train) is str and self.y_train == 'graph' else "pyod"
 
       self.tools = self.generate_tools(user_input['algorithm'])
       self.documents = self.load_and_split_documents()
@@ -63,8 +66,10 @@ class AgentSelector:
       if algorithm_input[0].lower() == "all":
         if self.package_name == "pygod":
           return ['SCAN','GAE','Radar','ANOMALOUS','ONE','DOMINANT','DONE','AdONE','AnomalyDAE','GAAN','DMGD','OCGNN','CoLA','GUIDE','CONAD','GADNR','CARD']
-        else:
+        elif self.package_name == "pyod":
           return ['ECOD', 'ABOD', 'FastABOD', 'COPOD', 'MAD', 'SOS', 'QMCD', 'KDE', 'Sampling', 'GMM', 'PCA', 'KPCA', 'MCD', 'CD', 'OCSVM', 'LMDD', 'LOF', 'COF', '(Incremental) COF', 'CBLOF', 'LOCI', 'HBOS', 'kNN', 'AvgKNN', 'MedKNN', 'SOD', 'ROD', 'IForest', 'INNE', 'DIF', 'FeatureBagging', 'LSCP', 'XGBOD', 'LODA', 'SUOD', 'AutoEncoder', 'VAE', 'Beta-VAE', 'SO_GAAL', 'MO_GAAL', 'DeepSVDD', 'AnoGAN', 'ALAD', 'AE1SVM', 'DevNet', 'R-Graph', 'LUNAR']
+        else:
+          return ['DifferenceScorer','KMeansScorer','CauchyNLLScorer','ExponentialNLLScorer','GammaNLLScorer','GaussianNLLScorer','LaplaceNLLScorer','PoissonNLLScorer','NormScorer','PyODScorer','WassersteinScorer']
       return algorithm_input
 
 if __name__ == "__main__":
@@ -83,8 +88,8 @@ if __name__ == "__main__":
 
   user_input = {
     "algorithm": ["ALL"],
-    "dataset_train": "./data/glass_train.mat",
-    "dataset_test": "./data/glass_test.mat",
+    "dataset_train": "./data/yahoo_train.csv",
+    "dataset_test": "./data/yahoo_test.csv",
     "parameters": {
       "contamination": 0.1
     }
