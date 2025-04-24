@@ -1,0 +1,20 @@
+Response for weibo:
+{"reason":"The weibo graph has a moderately large size (8K nodes, ~408K edges) and high-dimensional node features (400 dims). Contrastive Attributed Network Anomaly Detection (CONAD) effectively leverages contrastive objectives to jointly capture structural and attribute irregularities, scales to relatively large graphs, and handles high-dimensional features by learning robust embeddings through local/global contrastive sampling. This makes it well suited for detecting subtle anomalies in both topology and attributes of the weibo network.","choice":"CONAD"}
+CONAD
+---------------------
+Response for reddit:
+{"reason":"The reddit graph is a moderately sized attributed network where capturing both structural patterns and node features is crucial. Contrastive Attributed Network Anomaly Detection (CONAD) leverages contrastive learning to distinguish normal from abnormal nodes by jointly modeling attribute and structural discrepancies, offering robustness to noise and strong detection performance on similar benchmarks.","choice":"CONAD"}
+CONAD
+---------------------
+Response for disney:
+{"reason":"The disney graph is small (124 nodes, sparse connectivity) but has rich node features (28 attributes). Models that jointly reconstruct both structure and attributes via autoencoders are well‐suited for low‐degree graphs with high feature dimensionality. DOMINANT’s dual‐autoencoder framework effectively captures the interplay between topology and attributes, is stable on small datasets, and has demonstrated strong performance on similar anomaly‐detection tasks.","choice":"DOMINANT"}
+DOMINANT
+---------------------
+Response for books:
+{"reason":"The books dataset is relatively small and sparse (avg. degree 2.6) with only 21 node features. DOMINANT’s dual autoencoder framework effectively fuses both structural and attribute reconstruction errors to detect anomalies, without overly complex adversarial or higher‐order motif components that may be unstable on sparse graphs. Its proven stability and balanced use of structure and attributes make it a strong fit for this setting.","choice":"DOMINANT"}
+DOMINANT
+---------------------
+Response for enron:
+{"choice": "CONAD", "reason": "CONAD’s contrastive learning framework effectively captures discrepancies between structural and attribute distributions in moderate‐sized graphs like Enron (13K nodes, 176K edges, 18 features). Its scalable, end‐to‐end optimization has been shown to outperform reconstruction‐based and GAN‐based methods in detecting subtle anomalies in attributed networks with similar characteristics."}
+CONAD
+---------------------

@@ -1,0 +1,68 @@
+Response for arrhythmia:
+{"reason":"The arrhythmia set is very high‑dimensional (274) but quite small (452 samples), making heavy GAN‑based or deep‑one‑class methods prone to overfitting or instability. A Variational AutoEncoder’s built‑in KL regularization keeps the latent space well behaved, yielding more robust density estimates and reconstruction errors for anomaly scoring under limited data. Hence, VAE is the best fit.","choice":"VAE"}
+VAE
+---------------------
+Response for cardio:
+{"reason":"Given the moderate size (∼1.8k samples) and low dimensionality (21 features) of the cardio dataset, unsupervised methods that regularize well and do not require large GAN training are preferable. Variational AutoEncoders (VAEs) offer a probabilistic latent representation with built‑in regularization, yielding stable reconstructions and principled anomaly scores even on smaller tabular data. GAN‑based models and graph methods are less suited due to data scale and lack of graph structure, while semi‑supervised or one‑class SVM hybrids add complexity without clear gains here. Thus, VAE is selected.","choice":"VAE"}
+VAE
+---------------------
+Response for glass:
+{"reason":"Given the small dataset size (214 samples) and low dimensionality (9 features), a lightweight model that can learn compact representations without requiring large amounts of data is preferred. AE1SVM combines an autoencoder for feature extraction with a one‑class SVM for anomaly scoring, which tends to generalize well on small datasets and leverages the strength of SVMs in low-sample regimes. More complex GAN‑based or deep one‑class methods risk overfitting or requiring more data.","choice":"AE1SVM"}
+AE1SVM
+---------------------
+Response for ionosphere:
+{"reason":"The ionosphere dataset is relatively small (351 samples) with moderate dimensionality (33 features). GAN‐based methods (ALAD, AnoGAN, MO/SO‐GAAL) typically require larger data and can be unstable. Fully supervised deep methods (DevNet) risk overfitting here. Basic AEs or VAEs may underperform without additional density constraints. DeepSVDD is specifically designed for one‐class anomaly detection, learning a compact representation of the majority (normal) class and has been shown to work well on small to mid‐sized multivariate datasets. It balances representation learning with a robust anomaly objective, making it the best fit.","choice":"DeepSVDD"}
+DeepSVDD
+---------------------
+Response for letter:
+{"reason":"Given the modest size (1.6K samples) and moderate dimensionality (32) of the letter dataset, a simple reconstruction‑based model like an AutoEncoder (AE) is most appropriate. An AE can learn compact representations without requiring adversarial or one‑class objectives, is less prone to overfitting than deeper GAN or DeepSVDD methods on limited data, and has proven effective for unsupervised multivariate anomaly detection.", "choice":"AE"}
+AE
+---------------------
+Response for lympho:
+{"reason":"With only 148 samples and 18 dimensions, purely deep or GAN‐based methods risk overfitting and instability. A lightweight approach that first learns a compact representation via an autoencoder and then applies a One‑Class SVM on those features strikes a good balance, improving generalization on small multivariate data for anomaly detection.","choice":"AE1SVM"}
+AE1SVM
+---------------------
+Response for mnist:
+{"reason":"Given the high-dimensional nature of the MNIST feature space (100 dimensions) and the unsupervised anomaly detection setup (no labeled anomalies), DeepSVDD’s one‑class formulation is well‑suited. It learns a compact representation of the “normal” class in a deep feature space by minimizing the volume of a hypersphere enclosing the data, and has demonstrated strong performance on image‑derived datasets like MNIST. This makes it a natural choice for effective anomaly detection here.","choice":"DeepSVDD"}
+DeepSVDD
+---------------------
+Response for musk:
+{"reason":"The musk dataset has a moderate sample size (3k) but high dimensionality (166) and lacks labeled anomalies, making unsupervised compact representations crucial. DeepSVDD is specifically designed for one‐class deep learning on high‐dimensional multivariate data, enforcing a tight hyperspherical embedding of normal samples and thus yielding strong anomaly separation without requiring labels or massive data.","choice":"DeepSVDD"}
+DeepSVDD
+---------------------
+Response for optdigits:
+{"choice":"AE1SVM","reason":"The optdigits dataset is moderate‐sized (5 K samples) with 64 dimensions and a multi‐modal distribution (digits 0–9). AE1SVM first trains an autoencoder to capture the intrinsic low‐dimensional structure and then applies a one‐class SVM in the learned latent space to tightly enclose the normal data. This two‐stage approach yields more robust and discriminative anomaly boundaries on such multivariate data than a standalone autoencoder or purely generative models."}
+AE1SVM
+---------------------
+Response for pendigits:
+{"reason":"The pendigits dataset is a moderate‐sized (6.8K samples), 16‐dimensional multivariate set without explicit anomaly labels. DeepSVDD is specifically designed for unsupervised one‐class learning, enforcing compact representations of normal data in feature space. It has been shown to outperform basic AEs, VAEs, and unstable GAN‐based methods on tabular and sensor‐type datasets of similar scale and dimensionality. Thus, DeepSVDD offers a robust and well‐validated solution here.","choice":"DeepSVDD"}
+DeepSVDD
+---------------------
+Response for pima:
+{"reason":"The Pima dataset is relatively small (768 samples, 8 features) and contains labeled outcomes that can be treated as normal vs. anomalous. Deep GAN variants (ALAD, AnoGAN, MO‑GAAL, SO‑GAAL) tend to require large amounts of data to train stably, and very deep one‑class approaches (DeepSVDD) may overfit here. A Variational Autoencoder (VAE) offers a good balance: it handles multivariate continuous data well, learns a compressed latent representation, and effectively flags deviations even with limited samples. Thus, VAE is the most suitable choice for reliable anomaly detection on this dataset.","choice":"VAE"}
+VAE
+---------------------
+Response for satellite:
+{"reason":"The satellite dataset is a moderate-size (6.4k samples), 36‑dimensional multivariate tabular set with no explicit anomaly labels, so an unsupervised density/reconstruction approach is preferred. Variational Autoencoders (VAEs) balance expressiveness and stability: they learn a smooth latent representation of the normal data distribution and flag points with low likelihood/high reconstruction error as anomalies. Compared to GAN‑based or graph/GAN active‑learning methods, VAEs train reliably on tabular data of this scale without extensive hyperparameter tuning. Hence, VAE is selected.","choice":"VAE"}
+VAE
+---------------------
+Response for satimage-2:
+{"reason":"The satimage‑2 set is moderate in size (≈5800 samples) with 36 features and lacks extensive labeled anomalies, making unsupervised novelty detection most appropriate. DeepSVDD directly learns a compact representation of normal data by mapping it into a minimum‑volume hypersphere, avoiding the complexity and instability of adversarial training (e.g., GAN‑based methods) and the potential overfitting issues of pure autoencoders on smaller datasets. Its unified end‑to‑end deep one‑class objective typically yields strong performance on mid‑dimensional, moderate‑size anomaly benchmarks.","choice":"DeepSVDD"}
+DeepSVDD
+---------------------
+Response for shuttle:
+{"reason":"The shuttle dataset is a moderately sized, fully unsupervised anomaly detection task in 9-dimensional space. Deep One-Class Classification (DeepSVDD) is specifically designed to learn compact feature representations of “normal” data by mapping them near a hypersphere center, making deviations (anomalies) easier to detect. Compared to heavy GAN-based methods or VAEs, DeepSVDD offers a strong one-class objective that is well-suited for tabular, moderate-dimensional data without requiring labeled anomalies or complex generative networks.","choice":"DeepSVDD"}
+DeepSVDD
+---------------------
+Response for vertebral:
+{"reason":"The vertebral dataset is small (240 samples) with only 6 features, so simpler models that learn compact representations and have robust decision boundaries are preferable. An autoencoder combined with a one-class SVM (AE1SVM) can effectively capture the normal data distribution in a low-dimensional latent space and then use the SVM boundary to distinguish anomalies, avoiding the instability and high data requirements of GAN‐based or deeper methods.","choice":"AE1SVM"}
+AE1SVM
+---------------------
+Response for vowels:
+{"reason":"With a moderate-sized (1.5K samples), low-dimensional (12‐D) dataset and no anomaly labels, a straightforward unsupervised model that uses reconstruction error is well suited. A vanilla AutoEncoder is efficient to train, less prone to instability than GAN‐ or graph‐based methods, and provides a clear anomaly score via reconstruction loss.","choice":"AE"}
+AE
+---------------------
+Response for wbc:
+{"reason":"The Wisconsin Breast Cancer dataset (378 samples, 30 features) is relatively small for training deep adversarial or GAN-based anomaly detectors, which typically require large datasets to avoid overfitting. A hybrid autoencoder plus one‑class SVM (AE1SVM) leverages the autoencoder for nonlinear representation learning and the one‑class SVM for robust boundary estimation in low-sample regimes. This combination is well-suited to moderate-dimensional, small-sample anomaly detection without requiring extensive labeled anomalies.","choice":"AE1SVM"}
+AE1SVM
+---------------------

@@ -3,6 +3,7 @@ import os
 import re
 
 import sklearn
+from orion.data import load_signal
 
 
 class DataLoader:
@@ -272,6 +273,13 @@ Do not generate if statment code for file type because file type is already give
             print(f"❌ Error executing the generated script: {e}")
             return None, None
 
+        ## determine if the head is time series
+        if 'tiemstamp' in self.head.lower() or 'time' in self.head.lower():
+            from orion.data import load_signal
+            X = load_signal(self.filepath)
+            y = 'time-series'
+            return X, y
+
         if self.store_script and self.store_path and os.path.exists(self.store_path):
             generated_script = open(self.store_path).read()
         else:
@@ -344,8 +352,19 @@ Do not generate if statment code for file type because file type is already give
 
 
 if __name__ == "__main__":
+    import sys
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+    from config.config import Config
+    os.environ['OPENAI_API_KEY'] = Config.OPENAI_API_KEY
     # Example usage
-    data_loader = DataLoader("data/inj_cora_train.pt", store_script=False)
+    # file = 'data/yahoo_train.csv'
+    # from orion.data import load_signal
+    # print("Loading data from:", file)
+    # data = load_signal(file)
+    # print(data)
+    # exit()
+
+    data_loader = DataLoader("data/yahoo_train.csv", store_script=True)
     X_train, y_train = data_loader.load_data(split_data=False)
 
     print(X_train)

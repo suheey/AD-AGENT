@@ -1,0 +1,119 @@
+Response for arrhythmia:
+{
+  "reason": "The arrhythmia dataset is very small (452 instances) but extremely high‑dimensional (274 features).  GAN‑based approaches (ALAD, AnoGAN, MO‑GAAL, SO‑GAAL) and graph / deep network methods (LUNAR, DevNet) generally require thousands of samples to train stably; with only a few hundred points they are prone to mode collapse or severe overfitting.  A plain AutoEncoder or VAE can perform dimensionality reduction but, with so little data, their reconstruction error alone often lacks discrimination power.  DeepSVDD similarly trains a deep net end‑to‑end and is likely to overfit.  AE1SVM first compresses the data with a small autoencoder and then applies a kernel one‑class SVM in the learned low‑dimensional space.  The AE can be kept very shallow to avoid overfitting, while the one‑class SVM is well known to work well on small datasets and can capture non‑linear boundaries in the compressed space.  This hybrid makes the best use of limited samples while mitigating the curse of dimensionality, so it is the most compatible with the dataset’s characteristics.",
+  "choice": "AE1SVM"
+}
+AE1SVM
+---------------------
+Response for cardio:
+{
+  "reason": "The cardio dataset is small‑to‑moderate in size (1 831 samples) and only 21‑dimensional, so very deep or GAN‑based models such as ALAD, AnoGAN, MO‑GAAL or SO‑GAAL are likely to train unstably or over‑fit. DevNet needs a few labelled anomalies, which are typically not available for this dataset. LUNAR is graph‑based and can work, but its gain over simpler approaches on low‑dimensional, small datasets is usually limited. \n\nAmong the remaining purely unsupervised, light‑weight neural methods, DeepSVDD is well suited: it trains a compact network that pulls normal data into a small hypersphere, giving sharp decision boundaries while requiring far fewer samples than GANs or VAEs. Compared with a plain AutoEncoder or AE+OC‑SVM, DeepSVDD avoids an extra model (SVM) and hyper‑parameter search and has been shown in empirical studies (including on ODDS tabular datasets like cardio) to outperform basic AE and VAE baselines. Therefore, DeepSVDD is the most compatible and likely highest‑performing choice for anomaly detection on this dataset.",
+  "choice": "DeepSVDD"
+}
+DeepSVDD
+---------------------
+Response for glass:
+{
+  "reason": "The glass dataset is very small (214 samples) and low‑dimensional (9 features). GAN‑based methods (ALAD, AnoGAN, MO‑GAAL, SO‑GAAL) and other deep architectures (DevNet, LUNAR) typically need far more data to train stably. DeepSVDD and plain AE/VAE also involve training neural networks end‑to‑end and can easily overfit with so few points. AE1SVM, however, combines a light auto‑encoder (which can be kept shallow for such a small dataset) with a classical one‑class SVM, a model known to work well on small, low‑dimensional data. The SVM provides a strong analytic boundary without requiring large amounts of training data, while the AE can still capture any mild nonlinear structure. This balance makes AE1SVM the most suitable and likely highest‑performing option for anomaly detection on this dataset.",
+  "choice": "AE1SVM"
+}
+AE1SVM
+---------------------
+Response for ionosphere:
+{
+  "reason": "The ionosphere dataset is small (351 instances) and only moderately high‑dimensional (33 features).  GAN‑based methods such as ALAD, AnoGAN, MO‑GAAL and SO‑GAAL generally require far larger datasets to train their generator–discriminator pairs stably, so they are prone to overfitting and mode collapse here.  Variational approaches (VAE) and plain auto‑encoders (AE) can work on small data, but without an explicit one‑class objective they often reconstruct both normal and abnormal points equally well, reducing anomaly separability.  AE1SVM improves on AE but still splits the learning into two independent stages and relies on kernel SVM scalability.\n\nDeepSVDD, in contrast, trains a lightweight neural network end‑to‑end to map normal data into a minimal‑volume hypersphere, directly optimising an anomaly‑specific objective while remaining parameter‑efficient.  It has been shown to work well on tabular UCI datasets of comparable size (including ionosphere) and does not need labelled anomalies or large sample sizes.  Thus, among the available options, DeepSVDD is the most compatible with the dataset’s size, dimensionality and fully unsupervised setting, and is therefore the model most likely to achieve the best anomaly‑detection performance.",
+  "choice": "DeepSVDD"
+}
+DeepSVDD
+---------------------
+Response for letter:
+{
+  "reason": "The dataset is of moderate size (1600 samples) and moderate dimensionality (32 features). GAN‑based methods (ALAD, AnoGAN, MO‑GAAL, SO‑GAAL) generally need larger datasets and are harder to train stably in low‑sample regimes, so they are less suitable here. Plain autoencoders (AE/VAE) are simple but may not provide the tight decision boundary needed for accurate one‑class anomaly detection, while AE1SVM adds an extra SVM stage that can overfit or be sensitive to kernel choices. DeepSVDD is purpose‑built for one‑class, fully unsupervised anomaly detection; it directly learns a compact representation that encloses the normal data in a hypersphere, has been shown to work well on small‑to‑medium tabular datasets (including the “letter” dataset in its original paper), and does not require adversarial training. Hence, DeepSVDD is the most compatible and likely to deliver the best performance for this dataset.",
+  "choice": "DeepSVDD"
+}
+DeepSVDD
+---------------------
+Response for lympho:
+{
+  "reason": "The dataset is very small (148 samples, 18 features). GAN‑based approaches (ALAD, AnoGAN, MO‑GAAL, SO‑GAAL) and other heavily parameterized deep models (DevNet, LUNAR) generally require much larger datasets to train reliably; on so few points they are prone to mode collapse or severe over‑fitting. A plain AutoEncoder or VAE would train, but their reconstruction‑error thresholding alone is often unstable on such limited data. AE1SVM first learns a light autoencoder (which can be kept shallow to avoid over‑fitting) to obtain a compact representation, then applies a one‑class SVM—an algorithm that is well‑established for small‑sample anomaly detection. The combination leverages the non‑linear feature learning of the AE while relying on the robust, kernel‑based boundary of the SVM to detect outliers, making it well‑suited to a small, low‑dimensional dataset like “lympho”. Therefore, AE1SVM is the most appropriate choice.",
+  "choice": "AE1SVM"
+}
+AE1SVM
+---------------------
+Response for mnist:
+{
+  "reason": "The dataset is a variant of MNIST (image‑like data that has already been embedded into a 100‑dimensional vector space).  The sample size (≈7.6 k) is big enough to train a small neural network, but not large enough to make training a full GAN (ALAD, AnoGAN, GAAL variants) stable and reliable.  Among the purely unsupervised, non‑GAN alternatives, DeepSVDD is specifically designed for one‑class / anomaly detection on image data and was originally validated on MNIST, where it consistently outperformed standard auto‑encoders, VAEs and GAN‑based approaches while being much easier to optimise.  It requires no labelled anomalies (unlike DevNet), scales well to the given data size, and is computationally lighter than graph‑based LUNAR or kernel‑based AE1SVM.  Therefore it is the most compatible and likely to give the best performance on this dataset.",
+  "choice": "DeepSVDD"
+}
+DeepSVDD
+---------------------
+Response for musk:
+{
+  "reason": "The dataset is of moderate size (≈3 k instances) but relatively high dimensional (166 features). We need a model that (1) can learn a compact latent representation to mitigate the curse of dimensionality, (2) trains reliably with only a few thousand samples, and (3) works in a completely unsupervised setting.  \n• GAN‑based methods (ALAD, AnoGAN, MO‑GAAL, SO‑GAAL) generally require larger datasets and are harder to train stably, making them risky here.  \n• LUNAR relies on distance‑based neighbourhood graphs; in 166‑D such distances become less informative, so its advantage diminishes.  \n• AE and AE1SVM are simple but provide no probabilistic estimate of reconstruction uncertainty; AE1SVM also inherits the scalability issues of one‑class SVM in high dimensions.  \n• DeepSVDD optimises a hypersphere radius, which can over‑fit with limited data and needs careful hyper‑parameter tuning.  \n• DevNet is semi‑supervised and assumes a few labelled anomalies, which we do not have.  \n• VAE gives a probabilistic generative model, offers smoother latent space than a plain AE, is easier to train than GANs, and works well with the given data size. Therefore, among the available options, a Variational AutoEncoder (VAE) is the most suitable choice for detecting anomalies in this dataset.",
+  "choice": "VAE"
+}
+VAE
+---------------------
+Response for optdigits:
+{
+  "reason": "The dataset consists of only 5 216 examples of low‑resolution (8×8=64‑dimensional) digit images. A method should therefore (1) work well with modest‑sized image data, (2) be fully unsupervised (no labelled anomalies are assumed), (3) train stably on a small resolution and limited sample size, and (4) avoid the heavy training instability that GAN‑based approaches (ALAD, AnoGAN, MO‑/SO‑GAAL) frequently suffer from on small datasets.\n\nDeepSVDD fulfills these criteria: it learns a compact representation and directly optimizes a one‑class objective that concentrates normal data around a centre in feature space, which has repeatedly shown superior anomaly‑detection accuracy over plain auto‑encoders or VAE on image datasets such as MNIST/Optdigits‑like data. It needs no labelled anomalies (unlike DevNet) and is simpler and more data‑efficient than the GAN‑based methods, making it the most suitable choice here.",
+  "choice": "DeepSVDD"
+}
+DeepSVDD
+---------------------
+Response for pendigits:
+{
+  "reason": "The pendigits dataset is moderate in size (6,870 points) and low‑dimensional (16 features). This setting does not require the heavy capacity and training instability risks of GAN‑based approaches (ALAD, AnoGAN, MO‑GAAL, SO‑GAAL) and does not fully exploit graph–neighbourhood structures targeted by LUNAR. A straightforward auto‑encoder can learn a compact representation, but adding a one‑class SVM on the learned latent space (AE1SVM) provides a strong, well‑established statistical boundary around the normal class, which typically yields higher precision–recall on tabular, low‑dimension data. Hence, AE1SVM balances representation learning and a robust boundary model and is likely to outperform the other candidates on this dataset.",
+  "choice": "AE1SVM"
+}
+AE1SVM
+---------------------
+Response for pima:
+{
+  "reason": "The Pima dataset is small (768 samples) and low–dimensional (8 features).  GAN‑based methods such as ALAD, AnoGAN, MO‑GAAL and SO‑GAAL, or complex probabilistic models like VAE, generally need larger, high‑dimensional data to train stably and avoid mode‑collapse or over‑fitting; on this dataset they are likely to be unstable and give inconsistent results.  DeepSVDD, DevNet and LUNAR employ deeper networks whose benefit over simpler models diminishes when the feature space is only 8‑D and data are scarce.  In contrast, an Autoencoder‑based One‑Class SVM (AE1SVM) first learns a compact non‑linear representation with a shallow AE (which can be trained reliably even on small data) and then applies a one‑class SVM, a method that is well‑known to work effectively on low‑dimensional tabular data and small sample sizes.  This combination tends to outperform a plain AE while remaining far less data‑hungry and easier to regularise than GAN‑type approaches, making AE1SVM the most compatible and likely best‑performing choice for anomaly detection on the Pima dataset.",
+  "choice": "AE1SVM"
+}
+AE1SVM
+---------------------
+Response for satellite:
+{
+  "reason": "The Satellite dataset is a medium‑sized (≈6.4K samples) tabular data set with 36 continuous features and only a very small fraction of true anomalies. We need a purely unsupervised detector that (1) copes well with tabular, non‑image data, (2) works with modest sample sizes (GAN‑based models like ALAD, AnoGAN, MO/SO‑GAAL can be unstable and over‑parameterised here), and (3) can capture local density variations that frequently characterise anomalies in this dataset.\n\nLUNAR meets these requirements best. It builds a k‑NN graph and leverages a lightweight GNN to learn representations that unify several local‑outlier criteria, giving it the ability to adapt to local density differences while remaining data‑efficient. Prior empirical studies on ODDS/ODDS+ tabular benchmarks (which include the Satellite data) show LUNAR achieving higher ROC‑AUC and PR‑AUC than Autoencoders, DeepSVDD, and VAE on this very dataset. Models such as DevNet need labelled anomalies, and AE1SVM/DeepSVDD often underperform LUNAR on medium‑dimensional tabular data.\n\nTherefore, LUNAR is the most compatible and empirically strong choice for anomaly detection on the Satellite dataset.",
+  "choice": "LUNAR"
+}
+LUNAR
+---------------------
+Response for satimage-2:
+{
+  "reason": "Satimage‑2 is a small‑to‑medium sized (5.8 k samples) tabular dataset with 36 continuous features and a very low anomaly rate. Classical neighbour‑density methods (e.g., LOF) already work extremely well on this dataset because the anomalies lie in sparse regions of the feature space. LUNAR builds exactly on this idea: it first computes several local outlier scores, constructs a similarity graph and then refines those scores with a graph neural network. This gives it the advantages of LOF‑style locality while adding a learnable, representation‑aware refinement. It is fully unsupervised, does not need the large data volumes or training instability associated with GAN‑based models, and in the original paper LUNAR achieved near‑perfect AUROC on Satimage‑2, outperforming AE, VAE, DeepSVDD, DevNet and the GAN variants. Given the dataset’s characteristics and the published empirical evidence, LUNAR is the model most likely to deliver the best anomaly‑detection performance here.",
+  "choice": "LUNAR"
+}
+LUNAR
+---------------------
+Response for shuttle:
+{
+  "reason": "The shuttle dataset is a large (≈50k samples) but low‑dimensional (9 features) tabular dataset in which anomalies are rare. DeepSVDD is specifically designed for one‑class / unsupervised anomaly detection on vector data: it learns a representation that encloses normal data in a minimal hypersphere, making it well‑suited to low‑dimension tabular features while scaling efficiently to many samples. GAN‑based models such as ALAD, AnoGAN, MO‑GAAL, or SO‑GAAL tend to excel on high‑dimensional data (e.g., images) and require more unstable training. DevNet needs labeled anomalies, which are typically unavailable. LUNAR targets graph‑structured inputs, and AE / VAE baselines, while effective, generally yield slightly lower AUCs on Shuttle than DeepSVDD in published benchmarks. Therefore, DeepSVDD is the most compatible and likely highest‑performing choice for this dataset.",
+  "choice": "DeepSVDD"
+}
+DeepSVDD
+---------------------
+Response for vertebral:
+{
+  "reason": "The vertebral dataset is small (240 samples) and low‑dimensional (6 features). Complex GAN‑based approaches (ALAD, AnoGAN, MO‑GAAL, SO‑GAAL) and graph‑neural methods (LUNAR) generally require larger, higher‑dimensional data to train stably and avoid overfitting. Autoencoder variants (AE, VAE) are feasible but reconstructive criteria alone may be less discriminative in such a compact feature space. DeepSVDD, on the other hand, is a lightweight one‑class neural network that maps normal data into a minimal‑radius hypersphere, needing neither adversarial training nor large sample sizes. Its objective directly fits one‑class anomaly detection, and its model capacity can be kept small to suit the 6‑dimensional input, reducing overfitting risk while capturing non‑linear relations better than a plain AE1SVM. Therefore, DeepSVDD is the most compatible and likely to yield the best anomaly‑detection performance on this dataset.",
+  "choice": "DeepSVDD"
+}
+DeepSVDD
+---------------------
+Response for vowels:
+{
+  "reason": "The dataset is relatively small (1,456 samples) and only 12‑dimensional, so very deep or GAN‑based methods (e.g., ALAD, AnoGAN, MO‑GAAL, SO‑GAAL) are prone to overfitting or unstable training. Methods that rely on a few labelled anomalies (e.g., DevNet) or large graphs (e.g., LUNAR) are also ill‑suited. A plain AutoEncoder is simple but its reconstruction error alone may give a blurry decision boundary. AE1SVM first learns a compact latent representation with an autoencoder and then applies a one‑class SVM, which is well‑known to work reliably on small to medium‑sized tabular data. The SVM layer provides a sharper boundary and better control of false positives than reconstruction error alone, while the autoencoder still captures non‑linear structure. Therefore, AE1SVM is the most compatible choice for achieving strong anomaly‑detection performance on this modest‑sized, low‑dimensional multivariate dataset.",
+  "choice": "AE1SVM"
+}
+AE1SVM
+---------------------
+Response for wbc:
+{
+  "reason": "The dataset is small (378 samples) with a moderate feature dimension (30). GAN‑based methods (ALAD, AnoGAN, GAAL variants) and heavy deep models (LUNAR, DevNet) typically need far more data to train their numerous parameters reliably; with so few samples they are prone to overfitting or training instability. A plain autoencoder (AE) or DeepSVDD can cope with smaller data, but AE alone lacks a principled decision boundary, while DeepSVDD still relies on training a deep network end‑to‑end. \n\nAE1SVM first learns a compact feature representation with a lightweight autoencoder and then applies a one‑class SVM to that representation. The OC‑SVM provides a robust, well‑understood boundary in low‑sample regimes, and the AE helps denoise and reduce dimensionality, improving the SVM’s effectiveness. This hybrid approach strikes a good balance between model capacity and data availability, making it the most suitable choice for detecting anomalies in this small 30‑dimensional dataset.",
+  "choice": "AE1SVM"
+}
+AE1SVM
+---------------------

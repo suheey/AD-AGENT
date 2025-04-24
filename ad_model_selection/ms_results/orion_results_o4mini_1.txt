@@ -1,0 +1,24 @@
+Response for mars_science_laboratory_rover:
+{"reason":"The mars_science_laboratory_rover dataset spans 53 simultaneous signals, making it a high‑dimensional multivariate time series. Graph‑Augmented Normalizing Flows (GANF) explicitly models inter‑signal dependencies via graph structure while using normalizing flows to learn the joint distribution of the series. This combination provides a powerful, flexible anomaly score for multivariate data and is well suited to detecting subtle, cross‑signal anomalies in a high‑dimensional setting.","choice":"GANF"}
+GANF
+---------------------
+Response for soil_moisture_active_passive_satellite:
+{"reason":"The soil moisture dataset contains 27 interrelated time series signals, so capturing cross‐series dependencies is critical for accurate anomaly detection. GANF uses graph‐augmented normalizing flows to explicitly model both individual signal distributions and their relationships, making it especially well suited to multi‐signal anomaly detection in this context.","choice":"GANF"}
+GANF
+---------------------
+Response for aws_cloud_watch:
+{"reason":"The aws_cloud_watch dataset contains 17 interrelated time series whose anomalies arise from complex temporal and cross‐signal dependencies. Graph-Augmented Normalizing Flows (GANF) explicitly learns a latent graph structure among multiple signals and models their joint distribution via normalizing flows, making it particularly well suited to detect subtle multivariate anomalies in this setting.","choice":"GANF"}
+GANF
+---------------------
+Response for ad_exchange:
+{"reason":"The ad_exchange dataset contains 5 interacting signals requiring joint modeling of their dependencies for accurate anomaly detection. Graph-Augmented Normalizing Flows (GANF) explicitly captures multivariate relationships via learned graph structures and density modeling, enabling sensitive detection of deviations across all series. This makes it the most suitable choice for multi-signal time series anomaly detection in this scenario.","choice":"GANF"}
+GANF
+---------------------
+Response for traffic:
+{"reason":"The traffic dataset contains multiple correlated signals (7 channels) where capturing inter-sensor dependencies is crucial. GANF explicitly models multivariate relationships via graph-augmented normalizing flows to learn the joint distribution and detect anomalies more accurately in such multi-series settings.","choice":"GANF"}
+GANF
+---------------------
+Response for tweets:
+{"reason":"The tweets dataset has 10 multivariate signals and requires a model that can capture both long‑range temporal dependencies and inter-signal associations for robust anomaly scoring. The Anomaly Transformer is specifically designed for time‑series anomaly detection via attention‑based association discrepancy, making it well suited to detect subtle anomalies across multiple signals in this setting.","choice":"Anomaly Transformer"}
+Anomaly Transformer
+---------------------
