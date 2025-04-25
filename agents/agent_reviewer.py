@@ -37,8 +37,32 @@ TASK:
      `data, ya = gen_contextual_outlier(data, n=100, k=50)`  
      `data, ys = gen_structural_outlier(data, m=10, n=10)`  
      `data.y = torch.logical_or(ys, ya).long()`  
-2. Keep the variable names and the rest of the logic unchanged.
-3. Output runnable Python **code only** (no explanations, no markdown).
+   • For Darts:
+    `import numpy as np`
+    `import pandas as pd`
+    `from darts import TimeSeries`
+
+    `def generate_synthetic_series(n_points=300, n_features=3, anomaly_ratio=0.1):`
+        `np.random.seed(42)`
+        `timestamps = pd.date_range(start="2023-01-01", periods=n_points, freq="H")`
+        `values = np.random.normal(loc=0.0, scale=1.0, size=(n_points, n_features))`
+        `n_anomalies = int(n_points * anomaly_ratio)`
+        `anomaly_indices = np.random.choice(n_points, n_anomalies, replace=False)`
+        `values[anomaly_indices] += np.random.normal(loc=8.0, scale=2.0, size=(n_anomalies, n_features))`
+        `labels = np.zeros(n_points, dtype=int)`
+        `labels[anomaly_indices] = 1`
+
+        `df = pd.DataFrame(values, columns=[f"value_{{i}}" for i in range(n_features)])`
+        `df["timestamp"] = timestamps`
+        `df.set_index("timestamp", inplace=True)`
+
+        `series = TimeSeries.from_dataframe(df, value_cols=[f"value_{{i}}" for i in range(n_features)])`
+        `return series, labels`
+    `series_train, labels_train = generate_synthetic_series(n_points=300)`
+    `series_test,  labels_test  = generate_synthetic_series(n_points=200)`
+                                           
+    2. Keep the variable names and the rest of the logic unchanged.
+    3. Output runnable Python **code only** (no explanations, no markdown).
 """)
 
 class AgentReviewer:
