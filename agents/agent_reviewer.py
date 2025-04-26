@@ -38,28 +38,43 @@ TASK:
      `data, ys = gen_structural_outlier(data, m=10, n=10)`  
      `data.y = torch.logical_or(ys, ya).long()`  
    • For Darts:
+
     `import numpy as np`
     `import pandas as pd`
     `from darts import TimeSeries`
 
-    `def generate_synthetic_series(n_points=300, n_features=3, anomaly_ratio=0.1):`
-        `np.random.seed(42)`
-        `timestamps = pd.date_range(start="2023-01-01", periods=n_points, freq="H")`
-        `values = np.random.normal(loc=0.0, scale=1.0, size=(n_points, n_features))`
-        `n_anomalies = int(n_points * anomaly_ratio)`
-        `anomaly_indices = np.random.choice(n_points, n_anomalies, replace=False)`
-        `values[anomaly_indices] += np.random.normal(loc=8.0, scale=2.0, size=(n_anomalies, n_features))`
-        `labels = np.zeros(n_points, dtype=int)`
-        `labels[anomaly_indices] = 1`
 
-        `df = pd.DataFrame(values, columns=[f"value_{{i}}" for i in range(n_features)])`
-        `df["timestamp"] = timestamps`
+    `def load_series(path: str,`
+                    `n_samples: int = 500,`
+                    `n_features: int = 1,`
+                    `contamination: float = 0.05,`
+                    `seed: int = 42):`
+        `rng = np.random.default_rng(seed)`
+
+        `dates = pd.date_range("2020-01-01", periods=n_samples, freq="H")`
+
+        `data = rng.normal(loc=0.0, scale=1.0, size=(n_samples, n_features))`
+
+        `n_anom = int(n_samples * contamination)`
+        `anom_idx = rng.choice(n_samples, n_anom, replace=False)`
+        `data[anom_idx] += rng.normal(loc=6.0, scale=1.0, size=(n_anom, n_features))`
+
+        `df = pd.DataFrame(data, columns=[f"value_{{i+1}}" for i in range(n_features)])`
+        `df["timestamp"] = dates`
+        `df["anomaly"] = 0`
+        `df.loc[anom_idx, "anomaly"] = 1`
         `df.set_index("timestamp", inplace=True)`
 
-        `series = TimeSeries.from_dataframe(df, value_cols=[f"value_{{i}}" for i in range(n_features)])`
+        `value_cols = [c for c in df.columns if c.startswith("value_")]`
+        `series = TimeSeries.from_dataframe(df, value_cols=value_cols)`
+        `labels = df["anomaly"].astype(int).values`
         `return series, labels`
-    `series_train, labels_train = generate_synthetic_series(n_points=300)`
-    `series_test,  labels_test  = generate_synthetic_series(n_points=200)`
+
+    `series_train, y_train = load_series(None, n_samples=1000, n_features=3, seed=0)`
+    `series_test,  y_test  = load_series(None, n_samples=300,  n_features=3, seed=1)`
+    `series_train = series_train.astype(np.float32)`
+    `series_test  = series_test.astype(np.float32)`
+    `torch.set_default_dtype(torch.float32)`
                                            
     2. Keep the variable names and the rest of the logic unchanged.
     3. Output runnable Python **code only** (no explanations, no markdown).

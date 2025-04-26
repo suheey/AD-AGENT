@@ -10,7 +10,7 @@ from data_loader.data_loader import DataLoader
 from ad_model_selection.prompts.pygod_ms_prompt import generate_model_selection_prompt_from_pygod
 from ad_model_selection.prompts.pyod_ms_prompt import generate_model_selection_prompt_from_pyod
 from ad_model_selection.prompts.orion_ms_prompt import generate_model_selection_prompt_from_orion
-from utils.openai_client import query_openai
+# from utils.openai_client import query_openai
 import json
 
 class AgentSelector:
@@ -29,9 +29,9 @@ class AgentSelector:
       # self.package_name = "pygod" if type(self.y_train) is str and self.y_train == 'graph' else "pyod"
 
       self.load_data(self.data_path_train, self.data_path_test)
-      self.set_tools()
+      # self.set_tools()
 
-      # self.tools = self.generate_tools(user_input['algorithm'])
+      self.tools = self.generate_tools(user_input['algorithm'])
       self.documents = self.load_and_split_documents()
       self.vectorstore = self.build_vectorstore(self.documents)
 
@@ -46,35 +46,35 @@ class AgentSelector:
       self.X_test = X_test
       self.y_test = y_test
 
-    def set_tools(self):
-      if user_input['algorithm'] and user_input['algorithm'][0].lower() != "all":
-        self.tools = self.generate_tools(user_input['algorithm'])
-      else:
-        name = os.path.basename(self.data_path_train)
-        if self.package_name == "pyod":
-          size = self.X_train.shape[0]
-          dim = self.X_train.shape[1]
-          messages = generate_model_selection_prompt_from_pyod(name, size, dim)
-          content = query_openai(messages, model="o4-mini")
-          algorithm = json.loads(content)["choice"]
-        elif self.package_name == 'pygod':
-          num_node = self.X_train.num_nodes
-          num_edge = self.X_train.num_edges
-          num_feature = self.X_train.num_features
-          avg_degree = num_edge / num_node
-          print(f"num_node: {num_node}, num_edge: {num_edge}, num_feature: {num_feature}, avg_degree: {avg_degree}")
-          messages = generate_model_selection_prompt_from_pygod(name, num_node, num_edge, num_feature, avg_degree)
-          content = query_openai(messages, model="o4-mini")
-          algorithm = json.loads(content)["choice"]
-          print(f"Algorithm: {algorithm}")
-        else: # for time series data
-          num_signals = len(self.X_train)
-          messages = generate_model_selection_prompt_from_orion(name, num_signals)
-          content = query_openai(messages, model="o4-mini")
-          algorithm = json.loads(content)["choice"]
-          print(f"Algorithm: {algorithm}")
+    # def set_tools(self):
+    #   if user_input['algorithm'] and user_input['algorithm'][0].lower() != "all":
+    #     self.tools = self.generate_tools(user_input['algorithm'])
+    #   else:
+    #     name = os.path.basename(self.data_path_train)
+    #     if self.package_name == "pyod":
+    #       size = self.X_train.shape[0]
+    #       dim = self.X_train.shape[1]
+    #       messages = generate_model_selection_prompt_from_pyod(name, size, dim)
+    #       content = query_openai(messages, model="o4-mini")
+    #       algorithm = json.loads(content)["choice"]
+    #     elif self.package_name == 'pygod':
+    #       num_node = self.X_train.num_nodes
+    #       num_edge = self.X_train.num_edges
+    #       num_feature = self.X_train.num_features
+    #       avg_degree = num_edge / num_node
+    #       print(f"num_node: {num_node}, num_edge: {num_edge}, num_feature: {num_feature}, avg_degree: {avg_degree}")
+    #       messages = generate_model_selection_prompt_from_pygod(name, num_node, num_edge, num_feature, avg_degree)
+    #       content = query_openai(messages, model="o4-mini")
+    #       algorithm = json.loads(content)["choice"]
+    #       print(f"Algorithm: {algorithm}")
+    #     else: # for time series data
+    #       num_signals = len(self.X_train)
+    #       messages = generate_model_selection_prompt_from_orion(name, num_signals)
+    #       content = query_openai(messages, model="o4-mini")
+    #       algorithm = json.loads(content)["choice"]
+    #       print(f"Algorithm: {algorithm}")
 
-        self.tools = self.generate_tools([algorithm])
+    #     self.tools = self.generate_tools([algorithm])
         
 
     def load_and_split_documents(self,folder_path="./docs"):
@@ -108,7 +108,7 @@ class AgentSelector:
         elif self.package_name == "pyod":
           return ['ECOD', 'ABOD', 'FastABOD', 'COPOD', 'MAD', 'SOS', 'QMCD', 'KDE', 'Sampling', 'GMM', 'PCA', 'KPCA', 'MCD', 'CD', 'OCSVM', 'LMDD', 'LOF', 'COF', '(Incremental) COF', 'CBLOF', 'LOCI', 'HBOS', 'kNN', 'AvgKNN', 'MedKNN', 'SOD', 'ROD', 'IForest', 'INNE', 'DIF', 'FeatureBagging', 'LSCP', 'XGBOD', 'LODA', 'SUOD', 'AutoEncoder', 'VAE', 'Beta-VAE', 'SO_GAAL', 'MO_GAAL', 'DeepSVDD', 'AnoGAN', 'ALAD', 'AE1SVM', 'DevNet', 'R-Graph', 'LUNAR']
         else:
-          return ['DifferenceScorer','KMeansScorer','CauchyNLLScorer','ExponentialNLLScorer','GammaNLLScorer','GaussianNLLScorer','LaplaceNLLScorer','PoissonNLLScorer','NormScorer','PyODScorer','WassersteinScorer']
+          return ['GlobalNaiveAggregate','GlobalNaiveDrift','GlobalNaiveSeasonal']
       return algorithm_input
 
 if __name__ == "__main__":

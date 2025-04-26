@@ -102,7 +102,7 @@ Task:
 """)
 
 template_darts = PromptTemplate.from_template("""
-You are an expert Python developer with deep knowledge of the **Darts** library for time‑series anomaly detection. Your task is to:
+You are an expert Python developer with deep knowledge of the **Darts** library for forecasting-based time-series anomaly detection. Your task is to:
 
 1. Carefully study the official documentation excerpt for **`{algorithm}`** provided below so you fully understand how to initialise, fit, and use this class.
 
@@ -110,52 +110,60 @@ You are an expert Python developer with deep knowledge of the **Darts** library 
 {algorithm_doc}
 --- END DOCUMENTATION ---
 
-2. Output **only** executable Python code (no extra text) that performs unsupervised anomaly detection on two CSV files exactly as specified in the reference implementation.
+2. Output **only** executable Python code (no extra text) that performs forecasting-based anomaly detection on two CSV files exactly as specified in the reference implementation.
 
-• Implement the helper function `load_series(path: str) -> tuple[TimeSeries, np.ndarray]`
-  that:
+• Implement the helper function `load_series(path: str) -> tuple[TimeSeries, np.ndarray]` that:  
   – reads the CSV,  
   – converts all `value_…` columns into a multivariate `TimeSeries`,  
   – returns that series plus the `anomaly` column as an `int` numpy array.
 
-• Load the datasets:
-  `series_train, labels_train = load_series({data_path_train})`  
-  `series_test,  labels_test  = load_series({data_path_test})`
+• Load the datasets:  
+  `series_train, y_train = load_series({data_path_train})`  
+  `series_test,  y_test  = load_series({data_path_test})`
 
-• Instantiate the scorer:
-  `scorer = {algorithm}(**{{}})`
-  Include **only** those keys from `{parameters}` that match the class signature.
+• Cast both series to `np.float32` and set the default Torch dtype to `torch.float32`.
 
-• Train with `scorer.fit(series_train)` and score the test set with
-  `scores = scorer.score(series_test)`.
+• Instantiate the forecasting model:  
+  `model = {algorithm}(**{{}})` 
+  Do not input any unnecessary parameters
+  Add **only** those keys from `{parameters}` that match the class signature.
 
-• Determine `offset = scorer.window - 1` if the scorer has a `window`
-  attribute; otherwise `offset = 0`.  
-  Align labels: `labels_aligned = labels_test[offset:]`.  
-  Flatten score values for metric calculation.
+• Fit the forecasting model with `model.fit(series_train)`.
 
-• Use `QuantileDetector(high_quantile=0.995)` fitted on
-  `scorer.score(series_train)` to obtain binary predictions for the test set.
+• Wrap the model in a `ForecastingAnomalyModel` using a `KMeansScorer`:  
+  `from darts.ad.anomaly_model import ForecastingAnomalyModel`  
+  `from darts.ad.scorers import KMeansScorer`  
+  `fa_model = ForecastingAnomalyModel(model=model, scorer=KMeansScorer())`
 
-• Evaluate and **print** metrics in the exact formats:
+• Fit the anomaly model with `fa_model.fit(series_train, allow_model_training=False)` and score the test set with `scores = fa_model.score(series_test)`.
+
+• Use `QuantileDetector(high_quantile=0.995)` fitted on `scores` to obtain binary predictions:  
+  `from darts.ad.detectors import QuantileDetector`  
+  `detector = QuantileDetector(high_quantile=0.995)`  
+  `detector.fit(scores)`  
+  `y_pred = (detector.detect(scores).values() > 0).any(axis=1).astype(int)`
+
+• Align true labels:  
+  `offset = len(y_test) - len(y_pred)`  
+  `y_test_aligned = y_test[offset:]`
+
+• Evaluate and **print** metrics exactly as:  
   `AUROC: 0.1234`  
-  `AUPRC: 0.5678`
+  `AUPRC: 0.5678`  
   (values printed with four decimal places).
 
-• For every mismatch between prediction and true label, print:
-  `Failed prediction at point [x, y, ...] with true label z`
-  where the point is obtained from
-  `series_test.values()[i + offset].tolist()`.
+• For every mismatch between prediction and true label, print:  
+  `Failed prediction at point {{series_test.time_index[offset + i]}} with true label z`.
 
-3. At the very top of the script, add:
+3. At the very top of the script, add:  
+`import sys, os`
 
-import sys, os
-
-IMPORTANT RULES
+IMPORTANT RULES  
 • Produce a single runnable Python script following the steps above—no explanations, comments, or additional outputs.  
 • Do **not** pass any optional or invalid parameters to `{algorithm}`.  
 • Ensure the script works with the CSV paths `{data_path_train}` and `{data_path_test}`.
 """)
+
 
 # ---------- CLASS ----------
 class AgentCoder:
@@ -228,7 +236,7 @@ if __name__ == "__main__":
    from agents.agent_selector import AgentSelector
    from agents.agent_infominer import AgentInfoMiner
    user_input = {
-      "algorithm": ["KMeansScorer"],
+      "algorithm": ["NBEATS"],
       "dataset_train": "./data/yahoo_train.csv",
       "dataset_test": "./data/yahoo_test.csv",
       "parameters": {}
