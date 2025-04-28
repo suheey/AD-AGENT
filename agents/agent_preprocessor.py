@@ -38,10 +38,8 @@ class AgentPreprocessor:
         while not all([
             self.experiment_config["algorithm"],
             self.experiment_config["dataset_train"],
-            self.experiment_config["dataset_test"],
             os.path.exists(self.experiment_config["dataset_train"]),
-            os.path.exists(self.experiment_config["dataset_test"])
-        ]):
+            (not self.experiment_config["dataset_test"] or os.path.exists(self.experiment_config["dataset_test"]))]):
             if len(self.messages) == 1:
                 print("Enter command (e.g., 'Run IForest on ./data/glass_train.mat and ./data/glass_test.mat with contamination=0.1'):")
             user_input = input("User: ")
@@ -58,7 +56,7 @@ class AgentPreprocessor:
                         "Extract the algorithm, dataset_train, dataset_test, and optional parameters from the above conversation "
                         "and return them in Python dictionary (JSON) format. "
                         "If any item is missing, return an empty object. "
-                        "User input follows format `Run XXX on TRAIN_DATA and TEST_DATA with XXX` where with XXX is optional. "
+                        "User input follows format `Run XXX on TRAIN_DATA and TEST_DATA with XXX` where with XXX and TEST_DATA are optional. "
                         "For example: if the user says `Run IForest on ./data/train.mat and ./data/test.mat with contamination=0.1` "
                         "you should return `{'algorithm': ['IForest'], 'dataset_train': './data/train.mat', 'dataset_test': './data/test.mat', 'parameters': {'contamination': 0.1}}`. "
                         "If user says `Run IForest on ./data/train.mat and ./data/test.mat` you should return `{'algorithm': ['IForest'], 'dataset_train': './data/train.mat', 'dataset_test': './data/test.mat', 'parameters': {}}`. "
@@ -93,8 +91,8 @@ class AgentPreprocessor:
                 print("Chatbot: Please specify which algorithm to run.")
             if not self.experiment_config["dataset_train"] or (not os.path.exists(self.experiment_config["dataset_train"])):
                 print("Chatbot: Please provide a valid training dataset location.")
-            if not self.experiment_config["dataset_test"] or (not os.path.exists(self.experiment_config["dataset_test"])):
-                print("Chatbot: Please provide a valid testing dataset location.")
+            # if not self.experiment_config["dataset_test"] or (not os.path.exists(self.experiment_config["dataset_test"])):
+            #     print("Chatbot: Please provide a valid testing dataset location.")
         
         print("\nExperiment Configuration:")
         print(f"Algorithm: {self.experiment_config['algorithm']}")

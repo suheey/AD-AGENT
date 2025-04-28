@@ -37,8 +37,47 @@ TASK:
      `data, ya = gen_contextual_outlier(data, n=100, k=50)`  
      `data, ys = gen_structural_outlier(data, m=10, n=10)`  
      `data.y = torch.logical_or(ys, ya).long()`  
-2. Keep the variable names and the rest of the logic unchanged.
-3. Output runnable Python **code only** (no explanations, no markdown).
+   • For Darts:
+
+    `import numpy as np`
+    `import pandas as pd`
+    `from darts import TimeSeries`
+
+
+    `def load_series(path: str,`
+                    `n_samples: int = 500,`
+                    `n_features: int = 1,`
+                    `contamination: float = 0.05,`
+                    `seed: int = 42):`
+        `rng = np.random.default_rng(seed)`
+
+        `dates = pd.date_range("2020-01-01", periods=n_samples, freq="H")`
+
+        `data = rng.normal(loc=0.0, scale=1.0, size=(n_samples, n_features))`
+
+        `n_anom = int(n_samples * contamination)`
+        `anom_idx = rng.choice(n_samples, n_anom, replace=False)`
+        `data[anom_idx] += rng.normal(loc=6.0, scale=1.0, size=(n_anom, n_features))`
+
+        `df = pd.DataFrame(data, columns=[f"value_{{i+1}}" for i in range(n_features)])`
+        `df["timestamp"] = dates`
+        `df["anomaly"] = 0`
+        `df.loc[anom_idx, "anomaly"] = 1`
+        `df.set_index("timestamp", inplace=True)`
+
+        `value_cols = [c for c in df.columns if c.startswith("value_")]`
+        `series = TimeSeries.from_dataframe(df, value_cols=value_cols)`
+        `labels = df["anomaly"].astype(int).values`
+        `return series, labels`
+
+    `series_train, y_train = load_series(None, n_samples=1000, n_features=3, seed=0)`
+    `series_test,  y_test  = load_series(None, n_samples=300,  n_features=3, seed=1)`
+    `series_train = series_train.astype(np.float32)`
+    `series_test  = series_test.astype(np.float32)`
+    `torch.set_default_dtype(torch.float32)`
+                                           
+    2. Keep the variable names and the rest of the logic unchanged.
+    3. Output runnable Python **code only** (no explanations, no markdown).
 """)
 
 class AgentReviewer:

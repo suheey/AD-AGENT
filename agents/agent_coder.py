@@ -14,7 +14,7 @@ os.environ['OPENAI_API_KEY'] = Config.OPENAI_API_KEY
 # Initialize OpenAI LLM
 llm = ChatOpenAI(model="gpt-4o", temperature=0)
 
-template_pyod = PromptTemplate.from_template("""
+template_pyod_labeled = PromptTemplate.from_template("""
 You are an expert Python developer with deep experience in anomaly detection libraries. Your task is to:
 
 1. Use the provided official documentation content for `{algorithm}` to understand how to use the specified algorithm class, including initialization, training, and prediction methods.
@@ -47,7 +47,39 @@ IMPORTANT:
 - Do NOT input optional or incorrect parameters.
 """)
 
-template_pygod = PromptTemplate.from_template("""
+template_pyod_unlabeled = PromptTemplate.from_template("""
+You are an expert Python developer with deep experience in anomaly detection libraries. Your task is to:
+
+1. Use the provided official documentation content for `{algorithm}` to understand how to use the specified algorithm class, including initialization, training, and prediction methods.
+2. Write only executable Python code for anomaly detection using PyOD and do not include any explanations or descriptions.
+3. Base your code strictly on the following official documentation excerpt:
+
+--- BEGIN DOCUMENTATION ---
+{algorithm_doc}
+--- END DOCUMENTATION ---
+
+4. The code should:
+   (1)    
+   (2) Load the data from `{data_path_train}`
+   (3) Extract the feature matrix `X` from the loaded data as `X_train`
+   (5) Initialize the specified algorithm `{algorithm}` using variable `model`, strictly following the provided documentation and train the model with `X_train`
+   (6) Determine whether the following parameters `{parameters}` apply to this initialization function and, if so, add their values ​to the function.
+   (7) Use `.decision_scores_` on `X_train` for training outlier scores
+       Use `.decision_function(X_train)` for test outlier scores
+   (8) Print AUROC & AUPRC Using default value `-1`:
+       `AUROC: -1`
+       `AUPRC: -1`
+   (9) Using variables to record outlier data and print these points out with true label in following format:
+       `Detected outlier at point [xx,xx,xx...]` Use `.tolist()` to convert point to be an array.
+                     
+
+IMPORTANT: 
+- Strictly follow steps (2)-(8) to load the data from `{data_path_train}` & {data_path_test}.
+- Do NOT input optional or incorrect parameters.
+""")
+
+
+template_pygod_labeled = PromptTemplate.from_template("""
 You are an expert Python developer with deep experience in anomaly detection libraries. Your task is to:
 
 1. Use the provided official documentation content for `{algorithm}` to understand how to use the specified algorithm class, including initialization, training, and prediction methods.
@@ -80,6 +112,35 @@ IMPORTANT:
 - Do NOT include any additional or incorrect parameters.
 """)
 
+template_pygod_unlabeled = PromptTemplate.from_template("""
+You are an expert Python developer with deep experience in anomaly detection libraries. Your task is to:
+
+1. Use the provided official documentation content for `{algorithm}` to understand how to use the specified algorithm class, including initialization, training, and prediction methods.
+2. Write only executable Python code for anomaly detection using PyGOD and do not include any explanations or descriptions.
+3. Base your code strictly on the following official documentation excerpt:
+
+--- BEGIN DOCUMENTATION ---
+{algorithm_doc}
+--- END DOCUMENTATION ---
+
+4. The code should:
+   (1) Import sys, os, torch, and include the command `sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))`&`from pygod.detector import {algorithm}`
+   (2) Load training using `torch.load` with parameter `weights_only=False` from the file paths `{data_path_train}`
+   (4) Initialize the specified algorithm `{algorithm}` with the provided parameters `{parameters}`(if parameters applicable) using variable `model`, strictly following the documentation excerpt.
+   (5) Train the model using `model.fit(train_data)`.
+   (6) Predict on the test data using `pred, score = model.predict(train_data, return_score=True)`.
+   (7) Compute the total number of predicted anomalies:  
+       `num_anomalies = int((pred != 0).sum())`                                                     
+   (8) Print AUROC & AUPRC Using default value `-1`:
+       `AUROC: -1`
+       `AUPRC: -1`
+   (9) Using variables to record prediction outlier data and print number of outlier points in following format:
+       `Detected outlier number: xx`
+
+IMPORTANT:
+- Strictly follow steps (2)-(9) to load the data from `{data_path_train}` and `{data_path_test}`.
+- Do NOT include any additional or incorrect parameters.
+""")
 
 template_fix = PromptTemplate.from_template("""
 You are an expert Python developer with deep experience in anomaly detection libraries.
@@ -101,8 +162,8 @@ Task:
 2. Output **executable** Python ONLY, no comments/explanations.
 """)
 
-template_darts = PromptTemplate.from_template("""
-You are an expert Python developer with deep knowledge of the **Darts** library for time‑series anomaly detection. Your task is to:
+template_darts_labeled = PromptTemplate.from_template("""
+You are an expert Python developer with deep knowledge of the **Darts** library for forecasting-based time-series anomaly detection. Your task is to:
 
 1. Carefully study the official documentation excerpt for **`{algorithm}`** provided below so you fully understand how to initialise, fit, and use this class.
 
@@ -110,52 +171,129 @@ You are an expert Python developer with deep knowledge of the **Darts** library 
 {algorithm_doc}
 --- END DOCUMENTATION ---
 
-2. Output **only** executable Python code (no extra text) that performs unsupervised anomaly detection on two CSV files exactly as specified in the reference implementation.
+2. Output **only** executable Python code (no extra text) that performs forecasting-based anomaly detection on two CSV files exactly as specified in the reference implementation.
 
-• Implement the helper function `load_series(path: str) -> tuple[TimeSeries, np.ndarray]`
-  that:
+• Implement the helper function `load_series(path: str) -> tuple[TimeSeries, np.ndarray]` that:  
   – reads the CSV,  
   – converts all `value_…` columns into a multivariate `TimeSeries`,  
   – returns that series plus the `anomaly` column as an `int` numpy array.
 
-• Load the datasets:
-  `series_train, labels_train = load_series({data_path_train})`  
-  `series_test,  labels_test  = load_series({data_path_test})`
+• Load the datasets:  
+  `series_train, y_train = load_series({data_path_train})`  
+  `series_test,  y_test  = load_series({data_path_test})`
 
-• Instantiate the scorer:
-  `scorer = {algorithm}(**{{}})`
-  Include **only** those keys from `{parameters}` that match the class signature.
+• Cast both series to `np.float32` and set the default Torch dtype to `torch.float32`.
 
-• Train with `scorer.fit(series_train)` and score the test set with
-  `scores = scorer.score(series_test)`.
+• Instantiate the forecasting model:  
+  `model = {algorithm}(**{{}})` 
+  Do not input any unnecessary parameters
+  Add **only** those keys from `{parameters}` that match the class signature.
 
-• Determine `offset = scorer.window - 1` if the scorer has a `window`
-  attribute; otherwise `offset = 0`.  
-  Align labels: `labels_aligned = labels_test[offset:]`.  
-  Flatten score values for metric calculation.
+• Fit the forecasting model with `model.fit(series_train)`.
 
-• Use `QuantileDetector(high_quantile=0.995)` fitted on
-  `scorer.score(series_train)` to obtain binary predictions for the test set.
+• Wrap the model in a `ForecastingAnomalyModel` using a `KMeansScorer`:  
+  `from darts.ad.anomaly_model import ForecastingAnomalyModel`  
+  `from darts.ad.scorers import KMeansScorer`  
+  `fa_model = ForecastingAnomalyModel(model=model, scorer=KMeansScorer())`
 
-• Evaluate and **print** metrics in the exact formats:
+• Fit the anomaly model with `fa_model.fit(series_train, allow_model_training=False)` and score the test set with `scores = fa_model.score(series_test)`.
+
+• Use `QuantileDetector(high_quantile=0.995)` fitted on `scores` to obtain binary predictions:  
+  `from darts.ad.detectors import QuantileDetector`  
+  `detector = QuantileDetector(high_quantile=0.995)`  
+  `detector.fit(scores)`  
+  `y_pred = (detector.detect(scores).values() > 0).any(axis=1).astype(int)`
+
+• Align true labels:  
+  `offset = len(y_test) - len(y_pred)`  
+  `y_test_aligned = y_test[offset:]`
+
+• Evaluate and **print** metrics exactly as:  
   `AUROC: 0.1234`  
-  `AUPRC: 0.5678`
+  `AUPRC: 0.5678`  
   (values printed with four decimal places).
 
-• For every mismatch between prediction and true label, print:
-  `Failed prediction at point [x, y, ...] with true label z`
-  where the point is obtained from
-  `series_test.values()[i + offset].tolist()`.
+• For every mismatch between prediction and true label, print:  
+  `Failed prediction at point {{series_test.time_index[offset + i]}} with true label z`.
 
-3. At the very top of the script, add:
+3. At the very top of the script, add:  
+`import sys, os`
 
-import sys, os
-
-IMPORTANT RULES
+IMPORTANT RULES  
 • Produce a single runnable Python script following the steps above—no explanations, comments, or additional outputs.  
 • Do **not** pass any optional or invalid parameters to `{algorithm}`.  
 • Ensure the script works with the CSV paths `{data_path_train}` and `{data_path_test}`.
 """)
+
+template_darts_unlabeled = PromptTemplate.from_template("""
+You are an expert Python developer with deep knowledge of the **Darts** library for forecasting-based time-series anomaly detection. Your task is to:
+
+1. Carefully study the official documentation excerpt for **`{algorithm}`** provided below so you fully understand how to initialise, fit, and use this class.
+
+--- BEGIN DOCUMENTATION ---
+{algorithm_doc}
+--- END DOCUMENTATION ---
+
+2. Output **only** executable Python code (no extra text) that performs forecasting-based anomaly detection on two CSV files exactly as specified in the reference implementation.
+
+• Implement the helper function `load_series(path: str) -> TimeSeries` that:  
+  – reads the CSV,  
+  – converts all `value_…` columns into a multivariate `TimeSeries`,  
+  – returns that series.
+
+• Load the datasets:  
+  `series_train = load_series({data_path_train})`  
+  `series_test = load_series({data_path_test})`
+
+• Cast both series to `np.float32` and set the default Torch dtype to `torch.float32`.
+
+• Instantiate the forecasting model:  
+  `model = {algorithm}(**{{}})`  
+  Do not input any unnecessary parameters.  
+  Add **only** those keys from `{parameters}` that match the class signature.
+
+• Fit the forecasting model with `model.fit(series_train)`.
+
+• Wrap the model in a `ForecastingAnomalyModel` using a `KMeansScorer`:  
+  `from darts.ad.anomaly_model import ForecastingAnomalyModel`  
+  `from darts.ad.scorers import KMeansScorer`  
+  `fa_model = ForecastingAnomalyModel(model=model, scorer=KMeansScorer())`
+
+• Fit the anomaly model with `fa_model.fit(series_train, allow_model_training=False)` and score the test set with:  
+  `scores = fa_model.score(series_test)`
+
+• Important: After scoring, do **not** reindex `series_test`.  
+  Instead, use `series_test.values()` directly, and slice it from the end to match the length of `scores` and `y_pred`:  
+  `series_array = series_test.values()`  
+  `series_array = series_array[-len(scores):]`
+
+• Use `QuantileDetector(high_quantile=0.995)` fitted on `scores` to obtain binary predictions:  
+  `from darts.ad.detectors import QuantileDetector`  
+  `detector = QuantileDetector(high_quantile=0.995)`  
+  `detector.fit(scores)`  
+  `y_pred = (detector.detect(scores).values() > 0).any(axis=1).astype(int)`
+
+• **print** metrics exactly as:  
+  `AUROC: -1`  
+  `AUPRC: -1`
+
+• Use `scores.time_index[y_pred == 1]` to obtain the time points of outliers.
+
+• When printing outlier points:  
+  - Select outlier points from the sliced `series_array` using `outliers = series_array[y_pred == 1]`.  
+  - Iterate through them and print using:  
+    `Detected outlier at point [xx, xx, xx...]`  
+    Use `.tolist()` to convert each outlier to a Python list.
+
+3. At the very top of the script, add:  
+`import sys, os, pandas as pd`
+
+IMPORTANT RULES  
+• Produce a single runnable Python script following the steps above—no explanations, comments, or additional outputs.  
+• Do **not** pass any optional or invalid parameters to `{algorithm}`.  
+• Ensure the script works with the CSV paths `{data_path_train}` and `{data_path_test}`.
+""")
+
 
 # ---------- CLASS ----------
 class AgentCoder:
@@ -173,7 +311,13 @@ class AgentCoder:
         input_parameters,
         package_name
     ) -> str:
-        tpl = template_pyod if package_name == "pyod" else( template_pygod if package_name == "pygod" else template_darts)
+        tpl = None
+        if package_name == "pyod":
+            tpl = template_pyod_labeled if data_path_test else template_pyod_unlabeled
+        elif package_name == "pygod":
+            tpl = template_pygod_labeled if data_path_test else template_pygod_unlabeled
+        else:
+            tpl = template_darts_labeled if data_path_test else template_darts_unlabeled
         raw = llm.invoke(
             tpl.invoke({
                 "algorithm": algorithm,
@@ -228,9 +372,9 @@ if __name__ == "__main__":
    from agents.agent_selector import AgentSelector
    from agents.agent_infominer import AgentInfoMiner
    user_input = {
-      "algorithm": ["KMeansScorer"],
-      "dataset_train": "./data/yahoo_train.csv",
-      "dataset_test": "./data/yahoo_test.csv",
+      "algorithm": ["GlobalNaiveAggregate"],
+      "dataset_train": "yahoo_train.csv",
+      "dataset_test": "",
       "parameters": {}
    }
    agentSelector = AgentSelector(user_input=user_input)# if want to unit test, please import AgentSelector

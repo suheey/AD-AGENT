@@ -37,17 +37,18 @@ web_search_prompt_pygod = PromptTemplate.from_template("""
 """)
 
 web_search_prompt_darts = PromptTemplate.from_template("""
-   You are a machine learning expert and will assist me with researching a specific use of a deep learning model in Darts. Here is the official document you should refer to: https://unit8co.github.io/darts/generated_api/darts.ad.scorers.html
+   You are a machine learning expert and will assist me with researching a specific use of a deep learning model in Darts. Here is the official document you should refer to: https://unit8co.github.io/darts/generated_api/darts.models.forecasting.global_baseline_models.html
    I want to run `{algorithm_name}`. What is the Initialization function, parameters and Attributes? 
    Briefly return realted document content.
    Then, extract **all parameters** of the `__init__` method for the `{algorithm_name}` class, along with their default values if available, and return a valid Python dictionary string in the following format:
     ```python
     {{
-        "param1": default_value1,
-        "param2": default_value2,
+        "param1": default_value1, (Required)
+        "param2": default_value2, (Not Required)
         ...
     }}
    If any default value is an object or function (e.g., MinMaxScaler()), wrap it in quotes to ensure valid Python syntax for ast.literal_eval.
+   Explain the parameters in 
 """)
 
 class AgentInfoMiner:
@@ -140,7 +141,7 @@ class AgentInfoMiner:
 if __name__ == "__main__":
     agent = AgentInfoMiner()
     # Example usage
-    algorithm = "KMeansScorer"
+    algorithm = "global_baseline_models"
     vectorstore = None  # Replace with actual vectorstore object
     package_name = "darts"
     doc = agent.query_docs(algorithm, vectorstore, package_name)
