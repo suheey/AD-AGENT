@@ -226,7 +226,75 @@ IMPORTANT RULES
 """)
 
 template_darts_unlabeled = PromptTemplate.from_template("""
+You are an expert Python developer with deep knowledge of the **Darts** library for forecasting-based time-series anomaly detection. Your task is to:
+
+1. Carefully study the official documentation excerpt for **`{algorithm}`** provided below so you fully understand how to initialise, fit, and use this class.
+
+--- BEGIN DOCUMENTATION ---
+{algorithm_doc}
+--- END DOCUMENTATION ---
+
+2. Output **only** executable Python code (no extra text) that performs forecasting-based anomaly detection on two CSV files exactly as specified in the reference implementation.
+
+• Implement the helper function `load_series(path: str) -> TimeSeries` that:  
+  – reads the CSV,  
+  – converts all `value_…` columns into a multivariate `TimeSeries`,  
+  – returns that series.
+
+• Load the datasets:  
+  `series_train = load_series({data_path_train})`  
+  `series_test = load_series({data_path_test})`
+
+• Cast both series to `np.float32` and set the default Torch dtype to `torch.float32`.
+
+• Instantiate the forecasting model:  
+  `model = {algorithm}(**{{}})`  
+  Do not input any unnecessary parameters.  
+  Add **only** those keys from `{parameters}` that match the class signature.
+
+• Fit the forecasting model with `model.fit(series_train)`.
+
+• Wrap the model in a `ForecastingAnomalyModel` using a `KMeansScorer`:  
+  `from darts.ad.anomaly_model import ForecastingAnomalyModel`  
+  `from darts.ad.scorers import KMeansScorer`  
+  `fa_model = ForecastingAnomalyModel(model=model, scorer=KMeansScorer())`
+
+• Fit the anomaly model with `fa_model.fit(series_train, allow_model_training=False)` and score the test set with:  
+  `scores = fa_model.score(series_test)`
+
+• Important: After scoring, do **not** reindex `series_test`.  
+  Instead, use `series_test.values()` directly, and slice it from the end to match the length of `scores` and `y_pred`:  
+  `series_array = series_test.values()`  
+  `series_array = series_array[-len(scores):]`
+
+• Use `QuantileDetector(high_quantile=0.995)` fitted on `scores` to obtain binary predictions:  
+  `from darts.ad.detectors import QuantileDetector`  
+  `detector = QuantileDetector(high_quantile=0.995)`  
+  `detector.fit(scores)`  
+  `y_pred = (detector.detect(scores).values() > 0).any(axis=1).astype(int)`
+
+• **print** metrics exactly as:  
+  `AUROC: -1`  
+  `AUPRC: -1`
+
+• Use `scores.time_index[y_pred == 1]` to obtain the time points of outliers.
+
+• When printing outlier points:  
+  - Select outlier points from the sliced `series_array` using `outliers = series_array[y_pred == 1]`.  
+  - Iterate through them and print using:  
+    `Detected outlier at point [xx, xx, xx...]`  
+    Use `.tolist()` to convert each outlier to a Python list.
+
+3. At the very top of the script, add:  
+`import sys, os, pandas as pd`
+
+IMPORTANT RULES  
+• Produce a single runnable Python script following the steps above—no explanations, comments, or additional outputs.  
+• Do **not** pass any optional or invalid parameters to `{algorithm}`.  
+• Ensure the script works with the CSV paths `{data_path_train}` and `{data_path_test}`.
 """)
+
+
 # ---------- CLASS ----------
 class AgentCoder:
     """Now responsible for code generation **and** modification."""
@@ -304,8 +372,8 @@ if __name__ == "__main__":
    from agents.agent_selector import AgentSelector
    from agents.agent_infominer import AgentInfoMiner
    user_input = {
-      "algorithm": ["DOMINANT"],
-      "dataset_train": "inj_cora_train.pt",
+      "algorithm": ["GlobalNaiveAggregate"],
+      "dataset_train": "yahoo_train.csv",
       "dataset_test": "",
       "parameters": {}
    }
