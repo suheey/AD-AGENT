@@ -67,8 +67,8 @@ You are an expert Python developer with deep experience in anomaly detection lib
    (7) Use `.decision_scores_` on `X_train` for training outlier scores
        Use `.decision_function(X_train)` for test outlier scores
    (8) Print AUROC & AUPRC Using default value `-1`:
-       AUROC: -1
-       AUPRC: -1
+       `AUROC: -1`
+       `AUPRC: -1`
    (9) Using variables to record outlier data and print these points out with true label in following format:
        `Detected outlier at point [xx,xx,xx...]` Use `.tolist()` to convert point to be an array.
                      
@@ -113,7 +113,34 @@ IMPORTANT:
 """)
 
 template_pygod_unlabeled = PromptTemplate.from_template("""
-                                                        """)
+You are an expert Python developer with deep experience in anomaly detection libraries. Your task is to:
+
+1. Use the provided official documentation content for `{algorithm}` to understand how to use the specified algorithm class, including initialization, training, and prediction methods.
+2. Write only executable Python code for anomaly detection using PyGOD and do not include any explanations or descriptions.
+3. Base your code strictly on the following official documentation excerpt:
+
+--- BEGIN DOCUMENTATION ---
+{algorithm_doc}
+--- END DOCUMENTATION ---
+
+4. The code should:
+   (1) Import sys, os, torch, and include the command `sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))`&`from pygod.detector import {algorithm}`
+   (2) Load training using `torch.load` with parameter `weights_only=False` from the file paths `{data_path_train}`
+   (4) Initialize the specified algorithm `{algorithm}` with the provided parameters `{parameters}`(if parameters applicable) using variable `model`, strictly following the documentation excerpt.
+   (5) Train the model using `model.fit(train_data)`.
+   (6) Predict on the test data using `pred, score = model.predict(train_data, return_score=True)`.
+   (7) Compute the total number of predicted anomalies:  
+       `num_anomalies = int((pred != 0).sum())`                                                     
+   (8) Print AUROC & AUPRC Using default value `-1`:
+       `AUROC: -1`
+       `AUPRC: -1`
+   (9) Using variables to record prediction outlier data and print number of outlier points in following format:
+       `Detected outlier number: xx`
+
+IMPORTANT:
+- Strictly follow steps (2)-(9) to load the data from `{data_path_train}` and `{data_path_test}`.
+- Do NOT include any additional or incorrect parameters.
+""")
 
 template_fix = PromptTemplate.from_template("""
 You are an expert Python developer with deep experience in anomaly detection libraries.
@@ -277,8 +304,8 @@ if __name__ == "__main__":
    from agents.agent_selector import AgentSelector
    from agents.agent_infominer import AgentInfoMiner
    user_input = {
-      "algorithm": ["IForest"],
-      "dataset_train": "./data/glass_train.mat",
+      "algorithm": ["DOMINANT"],
+      "dataset_train": "inj_cora_train.pt",
       "dataset_test": "",
       "parameters": {}
    }
