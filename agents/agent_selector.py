@@ -28,7 +28,7 @@ class AgentSelector:
         self.package_name = "darts"
       # self.package_name = "pygod" if type(self.y_train) is str and self.y_train == 'graph' else "pyod"
 
-      self.load_data(self.data_path_train, self.data_path_test)
+      # self.load_data(self.data_path_train, self.data_path_test)
       # self.set_tools()
 
       self.tools = self.generate_tools(user_input['algorithm'])

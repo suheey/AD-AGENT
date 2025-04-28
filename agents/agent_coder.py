@@ -14,7 +14,7 @@ os.environ['OPENAI_API_KEY'] = Config.OPENAI_API_KEY
 # Initialize OpenAI LLM
 llm = ChatOpenAI(model="gpt-4o", temperature=0)
 
-template_pyod = PromptTemplate.from_template("""
+template_pyod_labeled = PromptTemplate.from_template("""
 You are an expert Python developer with deep experience in anomaly detection libraries. Your task is to:
 
 1. Use the provided official documentation content for `{algorithm}` to understand how to use the specified algorithm class, including initialization, training, and prediction methods.
@@ -47,7 +47,39 @@ IMPORTANT:
 - Do NOT input optional or incorrect parameters.
 """)
 
-template_pygod = PromptTemplate.from_template("""
+template_pyod_unlabeled = PromptTemplate.from_template("""
+You are an expert Python developer with deep experience in anomaly detection libraries. Your task is to:
+
+1. Use the provided official documentation content for `{algorithm}` to understand how to use the specified algorithm class, including initialization, training, and prediction methods.
+2. Write only executable Python code for anomaly detection using PyOD and do not include any explanations or descriptions.
+3. Base your code strictly on the following official documentation excerpt:
+
+--- BEGIN DOCUMENTATION ---
+{algorithm_doc}
+--- END DOCUMENTATION ---
+
+4. The code should:
+   (1)    
+   (2) Load the data from `{data_path_train}`
+   (3) Extract the feature matrix `X` from the loaded data as `X_train`
+   (5) Initialize the specified algorithm `{algorithm}` using variable `model`, strictly following the provided documentation and train the model with `X_train`
+   (6) Determine whether the following parameters `{parameters}` apply to this initialization function and, if so, add their values ​to the function.
+   (7) Use `.decision_scores_` on `X_train` for training outlier scores
+       Use `.decision_function(X_train)` for test outlier scores
+   (8) Print AUROC & AUPRC Using default value `-1`:
+       AUROC: -1
+       AUPRC: -1
+   (9) Using variables to record outlier data and print these points out with true label in following format:
+       `Detected outlier at point [xx,xx,xx...]` Use `.tolist()` to convert point to be an array.
+                     
+
+IMPORTANT: 
+- Strictly follow steps (2)-(8) to load the data from `{data_path_train}` & {data_path_test}.
+- Do NOT input optional or incorrect parameters.
+""")
+
+
+template_pygod_labeled = PromptTemplate.from_template("""
 You are an expert Python developer with deep experience in anomaly detection libraries. Your task is to:
 
 1. Use the provided official documentation content for `{algorithm}` to understand how to use the specified algorithm class, including initialization, training, and prediction methods.
@@ -80,6 +112,8 @@ IMPORTANT:
 - Do NOT include any additional or incorrect parameters.
 """)
 
+template_pygod_unlabeled = PromptTemplate.from_template("""
+                                                        """)
 
 template_fix = PromptTemplate.from_template("""
 You are an expert Python developer with deep experience in anomaly detection libraries.
@@ -101,7 +135,7 @@ Task:
 2. Output **executable** Python ONLY, no comments/explanations.
 """)
 
-template_darts = PromptTemplate.from_template("""
+template_darts_labeled = PromptTemplate.from_template("""
 You are an expert Python developer with deep knowledge of the **Darts** library for forecasting-based time-series anomaly detection. Your task is to:
 
 1. Carefully study the official documentation excerpt for **`{algorithm}`** provided below so you fully understand how to initialise, fit, and use this class.
@@ -164,7 +198,8 @@ IMPORTANT RULES
 • Ensure the script works with the CSV paths `{data_path_train}` and `{data_path_test}`.
 """)
 
-
+template_darts_unlabeled = PromptTemplate.from_template("""
+""")
 # ---------- CLASS ----------
 class AgentCoder:
     """Now responsible for code generation **and** modification."""
@@ -181,7 +216,13 @@ class AgentCoder:
         input_parameters,
         package_name
     ) -> str:
-        tpl = template_pyod if package_name == "pyod" else( template_pygod if package_name == "pygod" else template_darts)
+        tpl = None
+        if package_name == "pyod":
+            tpl = template_pyod_labeled if data_path_test else template_pyod_unlabeled
+        elif package_name == "pygod":
+            tpl = template_pygod_labeled if data_path_test else template_pygod_unlabeled
+        else:
+            tpl = template_darts_labeled if data_path_test else template_darts_unlabeled
         raw = llm.invoke(
             tpl.invoke({
                 "algorithm": algorithm,
@@ -236,9 +277,9 @@ if __name__ == "__main__":
    from agents.agent_selector import AgentSelector
    from agents.agent_infominer import AgentInfoMiner
    user_input = {
-      "algorithm": ["NBEATS"],
-      "dataset_train": "./data/yahoo_train.csv",
-      "dataset_test": "./data/yahoo_test.csv",
+      "algorithm": ["IForest"],
+      "dataset_train": "./data/glass_train.mat",
+      "dataset_test": "",
       "parameters": {}
    }
    agentSelector = AgentSelector(user_input=user_input)# if want to unit test, please import AgentSelector
