@@ -9,8 +9,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import time
 import tiktoken
 from langchain_openai import ChatOpenAI
-from agents.agent_infominer import AgentInfoMiner
-from agents.agent_coder import AgentCoder
+from agents.agent_info_miner import AgentInfoMiner
+from agents.agent_code_generator import AgentCodeGenerator
 from pydantic import Field
 
 
@@ -72,9 +72,9 @@ class InstrumentedInfoMiner(AgentInfoMiner):  # type: ignore
         return doc
 
 
-class InstrumentedCoder(AgentCoder):  # type: ignore
+class InstrumentedCodeGenerator(AgentCodeGenerator):  # type: ignore
     """
-    Wraps AgentCoder.generate_code and revise_code to measure generation durations.
+    Wraps AgentCodeGenerator.generate_code and revise_code to measure generation durations.
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

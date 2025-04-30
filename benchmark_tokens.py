@@ -76,12 +76,12 @@ class InstrumentedChatOpenAI(BaseChat):
 
 langchain_openai.ChatOpenAI = InstrumentedChatOpenAI
 
-# 1b) Ensure AgentCoder’s module‐level llm uses our instrumented class
-import agents.agent_coder as _ac
+# 1b) Ensure AgentCodeGenerator’s module‐level llm uses our instrumented class
+import agents.agent_code_generator as _ac
 _ac.llm = InstrumentedChatOpenAI(model="gpt-4o", temperature=0)
 
 
-# 2) Instrument OpenAI client for Preprocessor & InfoMiner
+# 2) Instrument OpenAI client for processor & InfoMiner
 BaseOpenAI = openai.OpenAI
 
 class InstrumentedOpenAI(BaseOpenAI):
@@ -92,7 +92,7 @@ class InstrumentedOpenAI(BaseOpenAI):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # patch chat.completions.create (used by AgentPreprocessor)
+        # patch chat.completions.create (used by Agentprocessor)
         orig_chat = self.chat.completions.create
         def wrapped_chat(*a, **k):
             resp = orig_chat(*a, **k)
@@ -131,9 +131,9 @@ def reset_counters():
         C.total_tokens      = 0
 
 # ========== Agents & Workflow ==========
-from agents.agent_preprocessor import AgentPreprocessor
-from agents.agent_infominer    import AgentInfoMiner
-from agents.agent_coder        import AgentCoder
+from agents.agent_processor import AgentProcessor
+from agents.agent_info_miner    import AgentInfoMiner
+from agents.agent_code_generator        import AgentCodeGenerator
 
 ALGOS = [
     'MO-GAAL'
@@ -146,9 +146,9 @@ rows = []
 for algo in ALGOS:
     print(f"\n=== Running {algo} ===")
 
-    # ---- Preprocessor ----
+    # ---- processor ----
     reset_counters()
-    pre = AgentPreprocessor(model="gpt-4", temperature=0)
+    pre = AgentProcessor(model="gpt-4", temperature=0)
     print(f"Type: Run {algo} on {TRAIN_PATH} with contamination=0.1")
     pre.run_chatbot()
     pre_in  = InstrumentedOpenAI.prompt_tokens + InstrumentedChatOpenAI.prompt_tokens
@@ -162,10 +162,10 @@ for algo in ALGOS:
     info_in  = InstrumentedOpenAI.prompt_tokens
     info_out = InstrumentedOpenAI.completion_tokens
 
-    # ---- Coder ----
+    # ---- CodeGenerator ----
     reset_counters()
-    coder = AgentCoder()
-    _ = coder.generate_code(
+    CodeGenerator = AgentCodeGenerator()
+    _ = CodeGenerator.generate_code(
         algorithm        = algo,
         data_path_train  = cfg["dataset_train"],
         data_path_test   = cfg["dataset_test"],
