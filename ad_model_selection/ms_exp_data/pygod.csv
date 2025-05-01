@@ -1,6 +1,0 @@
-name,num_node,num_edge,num_feature,avg_degree
-weibo,8405,407963,400,48.5
-reddit,10984,168016,64,15.3
-disney,124,335,28,2.7
-books,1418,3695,21,2.6
-enron,13533,176987,18,13.1
