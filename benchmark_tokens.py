@@ -14,6 +14,8 @@ logging.basicConfig(level=logging.ERROR)
 import openai
 import langchain_openai
 from typing import ClassVar
+import time
+import glob
 
 def _unpack_usage(usage):
     """Normalize usage fields for both dict and object forms."""
@@ -74,6 +76,12 @@ class InstrumentedChatOpenAI(BaseChat):
             InstrumentedChatOpenAI.total_tokens      += tt
         return result
 
+    def _call(self, messages, **kwargs):
+        # Add component tag to usage tracking
+        component = self.metadata.get("component", "unknown")
+        print(f"Tracking tokens for: {component}")
+        
+        
 langchain_openai.ChatOpenAI = InstrumentedChatOpenAI
 
 # 1b) Ensure AgentCodeGenerator’s module‐level llm uses our instrumented class
@@ -130,64 +138,95 @@ def reset_counters():
         C.completion_tokens = 0
         C.total_tokens      = 0
 
-# ========== Agents & Workflow ==========
+# ========== MODIFIED WORKFLOW ==========
 from agents.agent_processor import AgentProcessor
-from agents.agent_info_miner    import AgentInfoMiner
-from agents.agent_code_generator        import AgentCodeGenerator
+from agents.agent_info_miner import AgentInfoMiner
+from agents.agent_code_generator import AgentCodeGenerator
+from agents.agent_reviewer import AgentReviewer
 
-ALGOS = [
-    'MO-GAAL'
-    # ,'SO-GAAL','AutoEncoder','VAE','AnoGAN',
-    # 'DeepSVDD','ALAD','AE1SVM','DevNet','LUNAR'
-]
-TRAIN_PATH = './data/glass.mat'
+TARGET_DATASETS = ['arrhythmia', 'glass', 'vowels']
+ALGOS = ['MO-GAAL']
 
 rows = []
-for algo in ALGOS:
-    print(f"\n=== Running {algo} ===")
+for dataset in TARGET_DATASETS:
+    dataset_path = f"./data/pyod_data/{dataset}.mat"
+    
+    if not os.path.exists(dataset_path):
+        print(f" Dataset {dataset} not found at {dataset_path}")
+        continue
 
-    # ---- processor ----
-    reset_counters()
-    pre = AgentProcessor(model="gpt-4", temperature=0)
-    print(f"Type: Run {algo} on {TRAIN_PATH} with contamination=0.1")
-    pre.run_chatbot()
-    pre_in  = InstrumentedOpenAI.prompt_tokens + InstrumentedChatOpenAI.prompt_tokens
-    pre_out = InstrumentedOpenAI.completion_tokens + InstrumentedChatOpenAI.completion_tokens
-    cfg     = pre.experiment_config
+    for algo in ALGOS:
+        reset_counters()
+        start_time = time.perf_counter()
+        
+        try:
+            # ---- Processor ----
+            pre = AgentProcessor(model="gpt-4", temperature=0)
+            pre.run_chatbot()  # Will be automated via input queue
+            pre_in = InstrumentedOpenAI.prompt_tokens + InstrumentedChatOpenAI.prompt_tokens
+            pre_out = InstrumentedOpenAI.completion_tokens + InstrumentedChatOpenAI.completion_tokens
+            cfg = pre.experiment_config
 
-    # ---- InfoMiner ----
-    reset_counters()
-    inf = AgentInfoMiner()
-    doc = inf.query_docs(algo, None, 'pyod')
-    info_in  = InstrumentedOpenAI.prompt_tokens
-    info_out = InstrumentedOpenAI.completion_tokens
+            # ---- InfoMiner ----
+            reset_counters()
+            inf = AgentInfoMiner()
+            doc = inf.query_docs(algo, None, 'pyod')
+            info_in = InstrumentedOpenAI.prompt_tokens
+            info_out = InstrumentedOpenAI.completion_tokens
 
-    # ---- CodeGenerator ----
-    reset_counters()
-    CodeGenerator = AgentCodeGenerator()
-    _ = CodeGenerator.generate_code(
-        algorithm        = algo,
-        data_path_train  = cfg["dataset_train"],
-        data_path_test   = cfg["dataset_test"],
-        algorithm_doc    = doc,
-        input_parameters = cfg["parameters"],
-        package_name     = 'pyod'
-    )
-    code_in  = InstrumentedChatOpenAI.prompt_tokens
-    code_out = InstrumentedChatOpenAI.completion_tokens
+            # ---- Code Generation & Review ----
+            reset_counters()
+            CodeGenerator = AgentCodeGenerator()
+            generated_code = CodeGenerator.generate_code(
+                algorithm=algo,
+                data_path_train=cfg["dataset_train"],
+                data_path_test=cfg["dataset_test"],
+                algorithm_doc=doc,
+                input_parameters=cfg["parameters"],
+                package_name='pyod'
+            )
+            code_in = InstrumentedChatOpenAI.prompt_tokens
+            code_out = InstrumentedChatOpenAI.completion_tokens
 
-    rows.append({
-        "algorithm": algo,
-        "pre_in":    pre_in,
-        "pre_out":   pre_out,
-        "info_in":   info_in,
-        "info_out":  info_out,
-        "code_in":   code_in,
-        "code_out":  code_out
-    })
+            reset_counters()
+            reviewer = AgentReviewer()
+            reviewer.test_code(generated_code, algo, 'pyod')
+            review_in = InstrumentedChatOpenAI.prompt_tokens
+            review_out = InstrumentedChatOpenAI.completion_tokens
 
-# ========== Report ==========
-df = pd.DataFrame(rows).set_index("algorithm")
-print("\n--- Token Usage Table ---")
-print(df)
-df.to_csv("token_usage_pre_inf_codegen.csv", index=True)
+            elapsed = time.perf_counter() - start_time
+            success = True
+        except Exception as e:
+            elapsed = time.perf_counter() - start_time
+            success = False
+            print(f" Failed {dataset} - {algo}: {str(e)}")
+
+        rows.append({
+            "dataset": dataset,
+            "algorithm": algo,
+            "pre_in": pre_in,
+            "pre_out": pre_out,
+            "info_in": info_in,
+            "info_out": info_out,
+            "code_in": code_in,
+            "code_out": code_out,
+            "review_in": review_in,
+            "review_out": review_out,
+            "time_sec": elapsed,
+            "success": success
+        })
+
+# ========== FORMATTED OUTPUT ==========
+df = pd.DataFrame(rows)
+print("\n=== Combined Token & Time Metrics ===")
+print(df[['dataset', 'algorithm', 
+          'pre_in', 'pre_out',
+          'info_in', 'info_out',
+          'code_in', 'code_out',
+          'review_in', 'review_out',
+          'time_sec', 'success']])
+
+# Save to CSV
+timestamp = time.strftime("%Y%m%d-%H%M%S")
+df.to_csv(f"benchmark_{timestamp}.csv", index=False)
+print(f"\n Saved results to benchmark_{timestamp}.csv")
