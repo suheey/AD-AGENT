@@ -76,6 +76,12 @@ python main.py
 python main.py -p
 ```
 
+### Run in Optimizer Mode
+
+```bash
+python main.py -o
+```
+
 ---
 
 ## 🧪 Test Commands
@@ -89,6 +95,9 @@ You can also run the system with natural-language-like test commands.
 Run IForest on ./data/glass_train.mat and ./data/glass_test.mat with contamination=0.1
 #pygod
 Run DOMINANT on ./data/inj_cora_train.pt and ./data/inj_cora_test.pt
+#darts
+Run GlobalNaiveAggregate on ./data/yahoo_train.csv and ./data/yahoo_test.csv
+
 ```
 
 ### Run All Algorithms

@@ -36,8 +36,30 @@ web_search_prompt_pygod = PromptTemplate.from_template("""
    If any default value is an object or function (e.g., MinMaxScaler()), wrap it in quotes to ensure valid Python syntax for ast.literal_eval.
 """)
 
+web_dict = {
+    "GlobalNaiveAggregate": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.global_baseline_models.html",
+    "GlobalNaiveDrift": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.global_baseline_models.html",
+    "GlobalNaiveSeasonal": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.global_baseline_models.html",
+    "RNNModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.rnn_model.html",
+    "BlockRNNModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.block_rnn_model.html",
+    "NBEATSModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.nbeats.html",
+    "NHiTSModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.nhits.html",
+    "TCNModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.tcn_model.html",
+    "TransformerModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.transformer_model.html",
+    "TFTModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.tft_model.html",
+    "DLinearModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.dlinear.html",
+    "NLinearModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.nlinear.html",
+    "TiDEModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.tide_model.html",
+    "TSMixerModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.tsmixer_model.html",
+    "LinearRegressionModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.linear_regression_model.html",
+    "RandomForest": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.random_forest.html",
+    "LightGBMModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.lgbm.html",
+    "XGBModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.xgboost.html",
+    "CatBoostModel": "https://unit8co.github.io/darts/generated_api/darts.models.forecasting.catboost_model.html"
+}
 web_search_prompt_darts = PromptTemplate.from_template("""
-   You are a machine learning expert and will assist me with researching a specific use of a deep learning model in Darts. Here is the official document you should refer to: https://unit8co.github.io/darts/generated_api/darts.models.forecasting.global_baseline_models.html
+   You are a machine learning expert and will assist me with researching a specific use of a deep learning model in Darts.
+                                                                                                    
    I want to run `{algorithm_name}`. What is the Initialization function, parameters and Attributes? 
    Briefly return realted document content.
    Then, extract **all parameters** of the `__init__` method for the `{algorithm_name}` class, along with their default values if available, and return a valid Python dictionary string in the following format:
@@ -48,7 +70,7 @@ web_search_prompt_darts = PromptTemplate.from_template("""
         ...
     }}
    If any default value is an object or function (e.g., MinMaxScaler()), wrap it in quotes to ensure valid Python syntax for ast.literal_eval.
-   Explain the parameters in 
+   Here are the official documents you should refer to:
 """)
 
 class AgentInfoMiner:
@@ -95,10 +117,13 @@ class AgentInfoMiner:
         
         client = OpenAI()
         prompt_temp = web_search_prompt_pyod if package_name == "pyod" else (web_search_prompt_pygod if package_name == "pygod" else web_search_prompt_darts)
+        prompt = prompt_temp.invoke({"algorithm_name": algorithm}).to_string()
+        if package_name == "darts":
+            prompt = prompt + "\n\n" + web_dict.get(algorithm, "")
         response = client.responses.create(
             model="gpt-4o",
             tools=[{"type": "web_search_preview"}],
-            input=prompt_temp.invoke({"algorithm_name": algorithm}).to_string(),
+            input=prompt,
             max_output_tokens=2024
         )
         algorithm_doc = response.output_text
@@ -141,7 +166,7 @@ class AgentInfoMiner:
 if __name__ == "__main__":
     agent = AgentInfoMiner()
     # Example usage
-    algorithm = "global_baseline_models"
+    algorithm = "RegressionModel"
     vectorstore = None  # Replace with actual vectorstore object
     package_name = "darts"
     doc = agent.query_docs(algorithm, vectorstore, package_name)
