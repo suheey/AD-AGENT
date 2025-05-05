@@ -3,7 +3,7 @@ import os
 import re
 
 import sklearn
-from orion.data import load_signal
+# from orion.data import load_signal
 
 
 class DataLoader:
