@@ -37,6 +37,9 @@ TASK:
      `data, ya = gen_contextual_outlier(data, n=100, k=50)`  
      `data, ys = gen_structural_outlier(data, m=10, n=10)`  
      `data.y = torch.logical_or(ys, ya).long()`  
+   • For tslib:
+    Do not generate any code.
+     
    • For Darts:
 
     `import numpy as np`

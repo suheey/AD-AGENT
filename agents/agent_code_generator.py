@@ -162,6 +162,53 @@ Task:
 2. Output **executable** Python ONLY, no comments/explanations.
 """)
 
+template_tslib_labeled = PromptTemplate.from_template("""
+You are an expert Python developer with deep knowledge of the **Tslib** library for forecasting-based anomaly detection. Your task is to:
+
+1. Carefully study the official documentation excerpt for **`{algorithm}`** provided below so you fully understand how to initialise, fit, and use this class.          
+
+
+--- BEGIN DOCUMENTATION ---
+{algorithm_doc}
+--- END DOCUMENTATION ---
+
+This is how to use how we use the Tslib library for anomaly detection:
+```python
+import os
+import subprocess
+
+cmd = [
+    "python", "-u", "./Time-Series-Library/run.py",
+    "--task_name", "anomaly_detection",
+    "--is_training", "1",
+    "--root_path", "./data",
+    "--model_id", "{data_path_train}",
+    "--model", "{algorithm}",
+    "--data", "Prject name of {data_path_train}", # if the data_path_train is ./data/MSL_train.npy, the project name is MSL
+    "--features", "M",
+    "--seq_len", "100",
+    "--pred_len", "0",
+    "--d_model", "128",
+    "--d_ff", "128",
+    "--e_layers", "3",
+    "--enc_in", "55",
+    "--c_out", "55",
+    "--anomaly_ratio", "1",
+    "--batch_size", "128",
+    "--train_epochs", "10",
+]
+
+subprocess.run(cmd)
+```
+You need to choose proper parameters for the model and add them to the command.
+Do not add unsupported parameters such as '--mix' nor '--output_attention'. Please follow instruction in [DOCUMENTATION] to add parameters or the example above.
+
+Output **only** executable Python code (no extra text) that performs forecasting-based anomaly detection.
+
+
+          
+""")
+
 template_darts_labeled = PromptTemplate.from_template("""
 You are an expert Python developer with deep knowledge of the **Darts** library for forecasting-based time-series anomaly detection. Your task is to:
 
@@ -316,6 +363,8 @@ class AgentCodeGenerator:
             tpl = template_pyod_labeled if data_path_test else template_pyod_unlabeled
         elif package_name == "pygod":
             tpl = template_pygod_labeled if data_path_test else template_pygod_unlabeled
+        elif package_name == "tslib" and data_path_test: # tslib only has labeled data
+            tpl = template_tslib_labeled 
         else:
             tpl = template_darts_labeled if data_path_test else template_darts_unlabeled
         raw = llm.invoke(
@@ -368,26 +417,27 @@ class AgentCodeGenerator:
         # return {}
 
 if __name__ == "__main__":
-   agentCodeGenerator = AgentCodeGenerator()
-   from agents.agent_selector import AgentSelector
-   from agents.agent_info_miner import AgentInfoMiner
-   user_input = {
-      "algorithm": ["GlobalNaiveAggregate"],
-      "dataset_train": "yahoo_train.csv",
-      "dataset_test": "",
+  agentCodeGenerator = AgentCodeGenerator()
+  from agents.agent_selector import AgentSelector
+  from agents.agent_info_miner import AgentInfoMiner
+  user_input = {
+      "algorithm": ["Crossformer"],
+      "dataset_train": "SMAP_train.npy",
+      "dataset_test": "SMAP_test.npy",
       "parameters": {}
-   }
-   agentSelector = AgentSelector(user_input=user_input)# if want to unit test, please import AgentSelector
-   agentInfoMiner = AgentInfoMiner()
-   algorithm_doc = agentInfoMiner.query_docs(algorithm=agentSelector.tools[0], vectorstore=agentSelector.vectorstore, package_name=agentSelector.package_name)
+  }
+  agentSelector = AgentSelector(user_input=user_input)# if want to unit test, please import AgentSelector
+  agentInfoMiner = AgentInfoMiner()
+  algorithm_doc = agentInfoMiner.query_docs(algorithm=agentSelector.tools[0], vectorstore=agentSelector.vectorstore, package_name=agentSelector.package_name)
+  # algorithm_doc = ""
 
-   code = agentCodeGenerator.generate_code(
+  code = agentCodeGenerator.generate_code(
       algorithm=user_input["algorithm"][0],
       data_path_train=user_input["dataset_train"],
       data_path_test=user_input["dataset_test"],
       algorithm_doc=algorithm_doc,
       input_parameters=user_input["parameters"],
       package_name=agentSelector.package_name
-   )
+  )
 
-   print(code)
+  print(code)

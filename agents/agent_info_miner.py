@@ -138,6 +138,9 @@ class AgentInfoMiner:
         #doc_list = vectorstore.similarity_search(query, k=3)
         #algorithm_doc = "\n\n".join([doc.page_content for doc in doc_list])
 
+        if package_name == "tslib":
+            algorithm_doc = ''
+
         if not algorithm_doc:
             print("Error in response for " + algorithm)
             print(response)

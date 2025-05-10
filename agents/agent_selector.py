@@ -24,6 +24,11 @@ class AgentSelector:
         self.package_name = "pygod"
       elif user_input['dataset_train'].endswith(".mat"):
         self.package_name = "pyod"
+      elif user_input['dataset_train'].endswith("_train.npy"):
+        user_input['dataset_train'] = user_input['dataset_train'].replace("_train.npy", "")
+        self.package_name = "tslib"
+        # self.tools = self.generate_tools(user_input['algorithm'])
+        # return
       else:
         self.package_name = "darts"
       # self.package_name = "pygod" if type(self.y_train) is str and self.y_train == 'graph' else "pyod"
@@ -127,9 +132,9 @@ if __name__ == "__main__":
   os.environ['OPENAI_API_KEY'] = Config.OPENAI_API_KEY
 
   user_input = {
-    "algorithm": ["ALL"],
-    "dataset_train": "./data/yahoo_train.csv",
-    "dataset_test": "./data/yahoo_test.csv",
+    "algorithm": ["Crossformer"],
+    "dataset_train": "./data/MSL_train.npy",
+    "dataset_test": "./data/MSL_test.npy",
     "parameters": {
       "contamination": 0.1
     }
