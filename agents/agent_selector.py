@@ -62,6 +62,11 @@ class AgentSelector:
 
       if train_path.endswith('.npy'):
         self.package_name = "tslib"
+        if self.X_train is not None:
+          if len(self.X_train.shape) > 1:
+            num_features = self.X_train.shape[1]
+            self.parameters['enc_in'] = num_features
+            self.parameters['c_out'] = num_features
       elif train_path.endswith('.pt') or type(y_train) is str and y_train == 'graph':
         self.package_name = "pygod"
       elif type(y_train) is str and y_train == 'time-series':
@@ -93,6 +98,11 @@ class AgentSelector:
           print(f"Algorithm: {algorithm}")
         else: # for time series data
           if self.X_train is not None:
+            print('Shape of X_train:', self.X_train.shape)
+            if len(self.X_train.shape) > 1:
+              num_features = self.X_train.shape[1]
+              self.parameters['enc_in'] = num_features
+            
             num_signals = len(self.X_train)
             messages = generate_model_selection_prompt_from_timeseries(name, num_signals)
             content = query_openai(messages, model="o4-mini")
@@ -102,6 +112,7 @@ class AgentSelector:
             algorithm = 'Autoformer'
 
         self.tools = self.generate_tools([algorithm])
+        print('Selector Parameters:', self.parameters)
         
 
     def load_and_split_documents(self,folder_path="./docs"):
@@ -154,12 +165,12 @@ if __name__ == "__main__":
   os.environ['OPENAI_API_KEY'] = Config.OPENAI_API_KEY
 
   user_input = {
-    "algorithm": ['none'],
-    "dataset_train": "./data/yahoo_train.csv",
-    "dataset_test": "./data/yahoo_test.csv",
+    "algorithm": ['TimesNet'],
+    "dataset_train": "./data/MSL_train.npy",
+    "dataset_test": "./data/MSL_test.npy",
     "parameters": {
-      "contamination": 0.1
     }
   }
   agentSelector = AgentSelector(user_input= user_input)
   print(f"Tools: {agentSelector.tools}")
+  print('Parameters:', agentSelector.parameters)

@@ -44,7 +44,9 @@ TASK:
             "--label_len", "5",
             "--pred_len", "0",
             "--train_epochs", "2"
-        Set these three parameters to 10, 5, 0, 2 respectively. This is for small data set unit test only
+            "--enc_in", "55"
+        Set these three parameters to 10, 5, 0, 2, 55 respectively. This is for small data set unit test only
+        You have to set `--enc_in` to 55 to match the data dimension. And chnage all dimention related parameters to 55
      
    • For Darts:
 

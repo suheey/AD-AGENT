@@ -201,6 +201,11 @@ Do not add unsupported parameters such as '--mix' nor '--output_attention'. Plea
 Avoid adding the following parameters:
 --use_amp, --use_multi_gpu, --itr
 
+Please set the following parameters to its input value, especially `--dec_in` and `--enc_in`:
+{parameters}
+You have to set these parameter as required.
+                                                      
+
 Output **only** executable Python code (no extra text) that performs forecasting-based anomaly detection.
 
 
