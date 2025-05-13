@@ -46,14 +46,19 @@ class AgentSelector:
 
     def load_data(self, train_path, test_path):
       train_loader = DataLoader(train_path, store_script=True, store_path='train_data_loader.py')
-      test_loader = DataLoader(test_path, store_script=True, store_path='test_data_loader.py')
-
       X_train, y_train = train_loader.load_data(split_data=False)
-      X_test, y_test = test_loader.load_data(split_data=False)
       self.X_train = X_train
       self.y_train = y_train
-      self.X_test = X_test
-      self.y_test = y_test
+
+      # Only load test data if test_path is provided and not empty
+      if test_path and os.path.exists(test_path):
+          test_loader = DataLoader(test_path, store_script=True, store_path='test_data_loader.py')
+          X_test, y_test = test_loader.load_data(split_data=False)
+          self.X_test = X_test
+          self.y_test = y_test
+      else:
+          self.X_test = None
+          self.y_test = None
 
       if train_path.endswith('.npy'):
         self.package_name = "tslib"
@@ -149,7 +154,7 @@ if __name__ == "__main__":
   os.environ['OPENAI_API_KEY'] = Config.OPENAI_API_KEY
 
   user_input = {
-    "algorithm": ['all'],
+    "algorithm": ['none'],
     "dataset_train": "./data/yahoo_train.csv",
     "dataset_test": "./data/yahoo_test.csv",
     "parameters": {

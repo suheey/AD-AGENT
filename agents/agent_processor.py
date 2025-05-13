@@ -40,6 +40,7 @@ class AgentProcessor:
             self.experiment_config["dataset_train"],
             os.path.exists(self.experiment_config["dataset_train"]),
             (not self.experiment_config["dataset_test"] or os.path.exists(self.experiment_config["dataset_test"]))]):
+            
             if len(self.messages) == 1:
                 print("Enter command (e.g., 'Run IForest on ./data/glass_train.mat and ./data/glass_test.mat with contamination=0.1'):")
             user_input = input("User: ")
@@ -66,7 +67,6 @@ class AgentProcessor:
                         "IMPORTANT: Algorithm should always be an array. "
                         "IMPORTANT: IF USER WANTS TO RUN ALL ALGORITHMS, return 'algorithm' as ['all']"
                     )
-                   
                 }
             ]
             structured_response = self.get_chatgpt_response(extraction_prompt)
@@ -88,11 +88,59 @@ class AgentProcessor:
                 pass
 
             if not self.experiment_config["algorithm"]:
-                print("Chatbot: Please specify which algorithm to run.")
+                print("Chatbot: Please specify which algorithm to run, or would you like me to choose an algorithm for you? (yes/no)")
+                choice = input("User: ").lower().strip()
+                if choice == "yes":
+                    # Set algorithm to ['none'] to let the selector choose
+                    self.experiment_config["algorithm"] = ["none"]
+                    break
+                elif choice == "no":
+                    continue
+                else:
+                    # User might have entered algorithm information directly
+                    self.messages.append({"role": "user", "content": choice})
+                    response = self.get_chatgpt_response(self.messages)
+                    self.messages.append({"role": "assistant", "content": response})
+
+                    extraction_prompt = [
+                        *self.messages,
+                        {
+                            "role": "system",
+                            "content": (
+                                "Extract the algorithm, dataset_train, dataset_test, and optional parameters from the above conversation "
+                                "and return them in Python dictionary (JSON) format. "
+                                "If any item is missing, return an empty object. "
+                                "User input follows format `Run XXX on TRAIN_DATA and TEST_DATA with XXX` where with XXX and TEST_DATA are optional. "
+                                "For example: if the user says `Run IForest on ./data/train.mat and ./data/test.mat with contamination=0.1` "
+                                "you should return `{'algorithm': ['IForest'], 'dataset_train': './data/train.mat', 'dataset_test': './data/test.mat', 'parameters': {'contamination': 0.1}}`. "
+                                "If user says `Run IForest on ./data/train.mat and ./data/test.mat` you should return `{'algorithm': ['IForest'], 'dataset_train': './data/train.mat', 'dataset_test': './data/test.mat', 'parameters': {}}`. "
+                                "If user says `Run IForest` you should return `{'algorithm': ['IForest'], 'dataset_train': None, 'dataset_test': None, 'parameters': {}}`. "
+                                "If user says `./data/train.mat and ./data/test.mat` you should return `{'algorithm': [], 'dataset_train': './data/train.mat', 'dataset_test': './data/test.mat', 'parameters': {}}`. "
+                                "IMPORTANT: DO NOT ASSUME ALGORITHM NAME OR PARAMETERS NAME. "
+                                "IMPORTANT: Algorithm should always be an array. "
+                                "IMPORTANT: IF USER WANTS TO RUN ALL ALGORITHMS, return 'algorithm' as ['all']"
+                            )
+                        }
+                    ]
+                    structured_response = self.get_chatgpt_response(extraction_prompt)
+
+                    try:
+                        extracted_info = eval(structured_response)
+                        if isinstance(extracted_info, dict):
+                            if extracted_info.get("algorithm"):
+                                self.experiment_config["algorithm"] = extracted_info["algorithm"]
+                            if extracted_info.get("dataset_train"):
+                                self.experiment_config["dataset_train"] = extracted_info["dataset_train"]
+                            if extracted_info.get("dataset_test"):
+                                self.experiment_config["dataset_test"] = extracted_info["dataset_test"]
+                            if extracted_info.get("parameters"):
+                                self.experiment_config["parameters"].update(extracted_info["parameters"])
+                    except Exception:
+                        # If parsing fails, continue to next iteration
+                        continue
+
             if not self.experiment_config["dataset_train"] or (not os.path.exists(self.experiment_config["dataset_train"])):
                 print("Chatbot: Please provide a valid training dataset location.")
-            # if not self.experiment_config["dataset_test"] or (not os.path.exists(self.experiment_config["dataset_test"])):
-            #     print("Chatbot: Please provide a valid testing dataset location.")
         
         print("\nExperiment Configuration:")
         print(f"Algorithm: {self.experiment_config['algorithm']}")
