@@ -141,6 +141,7 @@ Write a Python script that:
         exec(generated_script, {{}}, local_namespace)
         X = local_namespace.get("X")
         y = local_namespace.get("y")
+    But doe not add this code . 
 
 Do not generate conditional logic to check the file type. The file extension is already known at the time of code generation. Generate code specifically for the given file type without using if or elif statements.
 
@@ -273,12 +274,9 @@ Do not generate if statment code for file type because file type is already give
             print(f"❌ Error executing the generated script: {e}")
             return None, None
 
-        ## determine if the head is time series
-        if 'tiemstamp' in self.head.lower() or 'time' in self.head.lower():
-            from orion.data import load_signal
-            X = load_signal(self.filepath)
-            y = 'time-series'
-            return X, y
+        # ## determine if the head is time series
+        # if 'tiemstamp' in self.head.lower() or 'time' in self.head.lower():
+        #     return 'time-series', 'time-series'
 
         if self.store_script and self.store_path and os.path.exists(self.store_path):
             generated_script = open(self.store_path).read()
@@ -316,6 +314,9 @@ Do not generate if statment code for file type because file type is already give
                     return X, None, None, None
                 else:
                     return X, None
+            
+            if 'tiemstamp' in self.head.lower() or 'time' in self.head.lower():
+                return X, 'time-series'
 
             # if y is not None:
             #     print("✅ Extracted y:\n", y)
@@ -364,10 +365,16 @@ if __name__ == "__main__":
     # print(data)
     # exit()
 
+    if os.path.exists('head_generated_data_loader.py'):
+        os.remove('head_generated_data_loader.py')
+    if os.path.exists('generated_data_loader.py'):
+        os.remove('generated_data_loader.py')
+
     data_loader = DataLoader("data/yahoo_train.csv", store_script=True)
     X_train, y_train = data_loader.load_data(split_data=False)
 
     print(X_train)
     print(y_train)
 
+    print(len(X_train))
     #Run IForest on ./data/glass_train.mat and ./data/glass_test.mat with contamination=0.1

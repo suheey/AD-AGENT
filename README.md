@@ -93,12 +93,13 @@ You can also run the system with natural-language-like test commands.
 ```text
 #pyod
 Run IForest on ./data/glass_train.mat and ./data/glass_test.mat with contamination=0.1
+Run all on ./data/glass_train.mat and ./data/glass_test.mat with contamination=0.1
 #pygod
 Run DOMINANT on ./data/inj_cora_train.pt and ./data/inj_cora_test.pt
 #darts
 Run GlobalNaiveAggregate on ./data/yahoo_train.csv and ./data/yahoo_test.csv
 #tslib
-Run Crossformer on ./data/MSL_train.npy and ./data/MSL_test.npy
+Run LightTS on ./data/MSL_train.npy and ./data/MSL_test.npy
 
 ```
 
