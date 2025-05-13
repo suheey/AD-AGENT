@@ -66,7 +66,7 @@ class AgentSelector:
 
     def set_tools(self):
       user_input = self.user_input
-      if user_input['algorithm'] and user_input['algorithm'][0].lower() in ["all", 'none']:
+      if user_input['algorithm'] and user_input['algorithm'][0].lower() not in ["all", 'none']:
         self.tools = self.generate_tools(user_input['algorithm'])
       else:
         name = os.path.basename(self.data_path_train)
@@ -149,7 +149,7 @@ if __name__ == "__main__":
   os.environ['OPENAI_API_KEY'] = Config.OPENAI_API_KEY
 
   user_input = {
-    "algorithm": [],
+    "algorithm": ['all'],
     "dataset_train": "./data/yahoo_train.csv",
     "dataset_test": "./data/yahoo_test.csv",
     "parameters": {
