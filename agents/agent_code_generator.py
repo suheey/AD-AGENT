@@ -184,23 +184,18 @@ cmd = [
     "--root_path", "./data",
     "--model_id", "{data_path_train}",
     "--model", "{algorithm}",
-    "--data", "Prject name of {data_path_train}", # if the data_path_train is ./data/MSL_train.npy, the project name is MSL
-    "--features", "M",
-    "--seq_len", "100",
-    "--pred_len", "0",
-    "--d_model", "128",
-    "--d_ff", "128",
-    "--e_layers", "3",
-    "--enc_in", "55",
-    "--c_out", "55",
-    "--anomaly_ratio", "1",
-    "--batch_size", "128",
-    "--train_epochs", "10",
-]
+    "--data", "project name of {data_path_train}", # if the data_path_train is ./data/MSL_train.npy, the project name is MSL
 
-subprocess.run(cmd)
+]
+1. You must use `./data` as root_path. and for `--data` you need choose proper project name according to the `{data_path_train}`.
+eg.
 ```
-You need to choose proper parameters for the model and add them to the command.
+-- root_path ./data
+-- data MSL
+```
+                                                      
+
+You need to choose proper parameters for the model and add them to the command. Please note that for ETSformer, the encode layers and decode layers must be equal. `--e_layers` and `--d_layers` must be equal. For example, if you set `--e_layers 2`, you must set `--d_layers 2` as well.
 Do not add unsupported parameters such as '--mix' nor '--output_attention'. Please follow instruction in [DOCUMENTATION] to add parameters or the example above.
 
 Output **only** executable Python code (no extra text) that performs forecasting-based anomaly detection.

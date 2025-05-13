@@ -38,7 +38,7 @@ TASK:
      `data, ys = gen_structural_outlier(data, m=10, n=10)`  
      `data.y = torch.logical_or(ys, ya).long()`  
    • For tslib:
-    Do not generate any code.
+     Do not generate any new code. Just change the value of `--data` parameter to `MSL`. Since I want to run unit test on the data called `MSL` rahter than origial data
      
    • For Darts:
 

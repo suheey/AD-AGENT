@@ -73,6 +73,34 @@ web_search_prompt_darts = PromptTemplate.from_template("""
    Here are the official documents you should refer to:
 """)
 
+web_search_prompt_tslib = PromptTemplate.from_template("""
+ You are a machine learning expert and will assist me with researching a specific use of a deep learning model in `Time-Series-Library`. Here is the official document you should refer to: https://github.com/thuml/Time-Series-Library/blob/main/scripts/anomaly_detection/MSL/{algorithm_name}.sh .You only need to read this page and avoid search other related pages.
+
+
+                                                       
+   I want to run `{algorithm_name}`. What is the Initialization function, parameters and Attributes? 
+   This is a github sh code. You should read the code and get the parameters and attributes. The script code looks like this:
+   ```
+export CUDA_VISIBLE_DEVICES=0
+
+python -u run.py \
+  --task_name anomaly_detection \
+  --is_training 1 \
+  --root_path ./dataset/MSL \
+...
+   ```
+   There shoulbe be less than 20 parameters. Do not make up any parameters like `itr`, just follow the code in the web page.
+   The encoder layer and decoder layer must be equal, eg. `--e_layers 2 --d_layers 2`.
+   default values if available, and return a valid Python dictionary string in the following format:
+    ```python
+    {{
+        "param1": default_value1,
+        "param2": default_value2,
+        ...
+    }}
+   If any default value is an object or function (e.g., MinMaxScaler()), wrap it in quotes to ensure valid Python syntax for ast.literal_eval.
+""")
+
 class AgentInfoMiner:
     def __init__(self):
         pass
@@ -116,12 +144,23 @@ class AgentInfoMiner:
            
         
         client = OpenAI()
-        prompt_temp = web_search_prompt_pyod if package_name == "pyod" else (web_search_prompt_pygod if package_name == "pygod" else web_search_prompt_darts)
+        match package_name:
+            case "pyod":
+                prompt_temp = web_search_prompt_pyod
+            case "pygod":
+                prompt_temp = web_search_prompt_pygod
+            case "tslib":
+                prompt_temp = web_search_prompt_tslib
+            case _:
+                prompt_temp = web_search_prompt_darts
+
+        
         prompt = prompt_temp.invoke({"algorithm_name": algorithm}).to_string()
         if package_name == "darts":
             prompt = prompt + "\n\n" + web_dict.get(algorithm, "")
+        
         response = client.responses.create(
-            model="gpt-4o",
+            model="gpt-4.1",
             tools=[{"type": "web_search_preview"}],
             input=prompt,
             max_output_tokens=2024
@@ -138,8 +177,8 @@ class AgentInfoMiner:
         #doc_list = vectorstore.similarity_search(query, k=3)
         #algorithm_doc = "\n\n".join([doc.page_content for doc in doc_list])
 
-        if package_name == "tslib":
-            algorithm_doc = ''
+        # if package_name == "tslib":
+        #     algorithm_doc = ''
 
         if not algorithm_doc:
             print("Error in response for " + algorithm)
