@@ -40,11 +40,11 @@ TASK:
    • For tslib:
      Do not generate any new code. 
      1. Just change the value of `--data` parameter to `MSL` and `--root_path` to `./data/unit_test`. Since I want to run unit test on the data called `MSL` rahter than origial data
-     2.     "--seq_len", "2",
-            "--label_len", "2",
+     2.     "--seq_len", "10",
+            "--label_len", "5",
             "--pred_len", "0",
             "--train_epochs", "2"
-        Set these three parameters to 2, 2, 0, 2 respectively. This is for small data set unit test only
+        Set these three parameters to 10, 5, 0, 2 respectively. This is for small data set unit test only
      
    • For Darts:
 
