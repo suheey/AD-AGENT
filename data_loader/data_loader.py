@@ -249,6 +249,13 @@ Do not generate if statment code for file type because file type is already give
         The script is dynamically generated to include necessary imports and extract 'X' and 'y'.
         """
 
+        tslib_data = ['MSL', 'PSM', 'SMAP', 'SMD', 'SWaT']
+        if any(self.filepath.endswith(ds) for ds in tslib_data):
+            X = 'tslib'
+            Y = 'tslib'
+            return X, Y
+
+
         if self.store_script and  'head_' + self.store_path and os.path.exists('head_' + self.store_path):
             head_script = open('head_' + self.store_path).read()
         else:
@@ -370,7 +377,7 @@ if __name__ == "__main__":
     if os.path.exists('generated_data_loader.py'):
         os.remove('generated_data_loader.py')
 
-    data_loader = DataLoader("data/yahoo_train.csv", store_script=True)
+    data_loader = DataLoader("data/MSL", store_script=True)
     X_train, y_train = data_loader.load_data(split_data=False)
 
     print(X_train)

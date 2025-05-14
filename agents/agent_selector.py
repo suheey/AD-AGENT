@@ -60,7 +60,10 @@ class AgentSelector:
           self.X_test = None
           self.y_test = None
 
-      if train_path.endswith('.npy'):
+      print('End with npy:', train_path.endswith('.npy'))
+      if type(self.X_train) is str and self.X_train == 'tslib':
+        self.package_name = "tslib"
+      elif train_path.endswith('.npy'):
         self.package_name = "tslib"
         if self.X_train is not None:
           if len(self.X_train.shape) > 1:
@@ -97,7 +100,7 @@ class AgentSelector:
           algorithm = json.loads(content)["choice"]
           print(f"Algorithm: {algorithm}")
         else: # for time series data
-          if self.X_train is not None:
+          if self.X_train is not None and type(self.X_train) is not str:
             print('Shape of X_train:', self.X_train.shape)
             if len(self.X_train.shape) > 1:
               num_features = self.X_train.shape[1]
@@ -166,8 +169,8 @@ if __name__ == "__main__":
 
   user_input = {
     "algorithm": ['TimesNet'],
-    "dataset_train": "./data/MSL_train.npy",
-    "dataset_test": "./data/MSL_test.npy",
+    "dataset_train": "./data/MSL",
+    "dataset_test": "./data/MSL",
     "parameters": {
     }
   }

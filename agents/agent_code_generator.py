@@ -181,16 +181,16 @@ cmd = [
     "python", "-u", "./Time-Series-Library/run.py",
     "--task_name", "anomaly_detection",
     "--is_training", "1",
-    "--root_path", "./data",
+    "--root_path", "{data_path_train}",
     "--model_id", "{data_path_train}",
     "--model", "{algorithm}",
     "--data", "project name of {data_path_train}", # if the data_path_train is ./data/MSL_train.npy, the project name is MSL
 
 ]
-1. You must use `./data` as root_path. and for `--data` you need choose proper project name according to the `{data_path_train}`.
+1. You must use `{data_path_train}` as root_path. and for `--data` you need choose proper project name according to the `{data_path_train}`, the appdix of `{data_path_train}`
 eg.
 ```
--- root_path ./data
+-- root_path ./data/MSL
 -- data MSL
 ```
                                                       
@@ -198,12 +198,20 @@ eg.
 You need to choose proper parameters for the model and add them to the command. Please note that for ETSformer, the encode layers and decode layers must be equal. `--e_layers` and `--d_layers` must be equal. For example, if you set `--e_layers 2`, you must set `--d_layers 2` as well.
 Do not add unsupported parameters such as '--mix' nor '--output_attention'. Please follow instruction in [DOCUMENTATION] to add parameters or the example above.
                                                       
-Set `--gpt` to `1`
-Set `--gpu_type` to `mps` or `cuda` according to your environment. You need to write a simple code to decide this
+Set `--gpu` to `1`
+Set `--gpu_type` to `cuda`
                                                       
 Avoid adding the following parameters:
 --use_amp, --use_multi_gpu, --itr
+                                                      
 
+For `--dec_in`, `--enc_in`, and `c_out`, you need to set them according to the dataset name:
+- For MSL, set `--dec_in`, `--enc_in`, and `c_out` to 55
+- For SMAP, set `--dec_in`, `--enc_in`, and `c_out` to 25
+- For PSM, set `--dec_in`, `--enc_in`, and `c_out` to 25
+- For SMD, set `--dec_in`, `--enc_in`, and `c_out` to 38
+- For SWAT, set `--dec_in`, `--enc_in`, and `c_out` to 51
+                                                      
 Please set the following parameters to its input value, especially `--dec_in` and `--enc_in`:
 {parameters}
 You have to set these parameter as required.
@@ -365,11 +373,12 @@ class AgentCodeGenerator:
         package_name
     ) -> str:
         tpl = None
+        print('code generatro package_name:', package_name)
         if package_name == "pyod":
             tpl = template_pyod_labeled if data_path_test else template_pyod_unlabeled
         elif package_name == "pygod":
             tpl = template_pygod_labeled if data_path_test else template_pygod_unlabeled
-        elif package_name == "tslib" and data_path_test: # tslib only has labeled data
+        elif package_name == "tslib": # tslib only has labeled data
             tpl = template_tslib_labeled 
         else:
             tpl = template_darts_labeled if data_path_test else template_darts_unlabeled
