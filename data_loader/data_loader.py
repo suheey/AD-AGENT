@@ -249,6 +249,8 @@ Do not generate if statment code for file type because file type is already give
         The script is dynamically generated to include necessary imports and extract 'X' and 'y'.
         """
 
+        # It is hard to load tslib data using the generated script, so we need to handle it separately.
+        # TODO: research about better way to load the data for tslib
         tslib_data = ['MSL', 'PSM', 'SMAP', 'SMD', 'SWaT']
         if any(self.filepath.endswith(ds) for ds in tslib_data):
             X = 'tslib'
