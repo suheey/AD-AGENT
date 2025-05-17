@@ -99,7 +99,7 @@ Run DOMINANT on ./data/inj_cora_train.pt and ./data/inj_cora_test.pt
 #darts
 Run GlobalNaiveAggregate on ./data/yahoo_train.csv and ./data/yahoo_test.csv
 #tslib
-Run LightTS on ./data/MSL_train.npy and ./data/MSL_test.npy
+Run LightTS on ./data/MSL and ./data/MSL
 
 ```
 
