@@ -60,7 +60,7 @@ class AgentSelector:
           self.X_test = None
           self.y_test = None
 
-      print('End with npy:', train_path.endswith('.npy'))
+     
       if type(self.X_train) is str and self.X_train == 'tslib':
         self.package_name = "tslib"
       elif train_path.endswith('.npy'):

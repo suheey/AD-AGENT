@@ -7,4 +7,3 @@ def query_openai(messages, model="gpt-4o"):
         messages=messages
     )
     return response.choices[0].message.content
-

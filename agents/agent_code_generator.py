@@ -198,8 +198,8 @@ eg.
 You need to choose proper parameters for the model and add them to the command. Please note that for ETSformer, the encode layers and decode layers must be equal. `--e_layers` and `--d_layers` must be equal. For example, if you set `--e_layers 2`, you must set `--d_layers 2` as well.
 Do not add unsupported parameters such as '--mix' nor '--output_attention'. Please follow instruction in [DOCUMENTATION] to add parameters or the example above.
                                                       
-Set `--gpu` to `1`
-Set `--gpu_type` to `cuda`
+Set `--gpu_type` to `cpu`
+Set '--use_gpu' to 'False'
                                                       
 Avoid adding the following parameters:
 --use_amp, --use_multi_gpu, --itr
@@ -373,7 +373,7 @@ class AgentCodeGenerator:
         package_name
     ) -> str:
         tpl = None
-        print('code generatro package_name:', package_name)
+       
         if package_name == "pyod":
             tpl = template_pyod_labeled if data_path_test else template_pyod_unlabeled
         elif package_name == "pygod":

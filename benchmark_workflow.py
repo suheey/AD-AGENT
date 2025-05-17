@@ -125,10 +125,7 @@ from agents.agent_reviewer      import AgentReviewer
 
 # ─── Benchmark configuration ──────────────────────────────────────────────────
 DATA_DIR = "./data/pygod_data"
-ALGOS    = [
-    "AdONE", "ANOMALOUS", "AnomalyDAE", "CONAD", "DOMINAT",
-    "DONE", "GAAN", "GUIDE", "Radar", "SCAN"
-]
+ALGOS = ["GANN"]
 
 def run_one(algo: str, train_file: str):
     workflow_start = time.perf_counter()
@@ -141,7 +138,18 @@ def run_one(algo: str, train_file: str):
         "time_sec": 0,
         "total_time_sec": 0,
         "total_input_tokens": 0,
-        "total_output_tokens": 0
+        "total_output_tokens": 0,
+        "processor_input_tokens": 0,
+        "processor_output_tokens": 0,
+        "selector_input_tokens": 0,
+        "selector_output_tokens": 0,
+        "infominer_input_tokens": 0,
+        "infominer_output_tokens": 0,
+        "codegen_input_tokens": 0,
+        "codegen_output_tokens": 0,
+        "reviewer_input_tokens": 0,
+        "reviewer_output_tokens": 0,
+        "revision_count": 0
     }
 
     # ─ Processor ──────────────────────────────────────────────────────────────
@@ -167,23 +175,29 @@ def run_one(algo: str, train_file: str):
     proc_end = time.perf_counter()
 
     row["time_sec"] = proc_end - proc_start
-    row["total_input_tokens"] += InstrumentedOpenAI.prompt_tokens + InstrumentedChatOpenAI.prompt_tokens
-    row["total_output_tokens"] += InstrumentedOpenAI.completion_tokens + InstrumentedChatOpenAI.completion_tokens
+    row["processor_input_tokens"] = InstrumentedOpenAI.prompt_tokens + InstrumentedChatOpenAI.prompt_tokens
+    row["processor_output_tokens"] = InstrumentedOpenAI.completion_tokens + InstrumentedChatOpenAI.completion_tokens
+    row["total_input_tokens"] += row["processor_input_tokens"]
+    row["total_output_tokens"] += row["processor_output_tokens"]
 
     cfg = proc.experiment_config
 
     # ─ Selector ────────────────────────────────────────────────────────────────
     reset_counters()
     sel = AgentSelector(cfg)
-    row["total_input_tokens"] += InstrumentedChatOpenAI.prompt_tokens + InstrumentedOpenAI.prompt_tokens
-    row["total_output_tokens"] += InstrumentedChatOpenAI.completion_tokens + InstrumentedOpenAI.completion_tokens
+    row["selector_input_tokens"] = InstrumentedChatOpenAI.prompt_tokens + InstrumentedOpenAI.prompt_tokens
+    row["selector_output_tokens"] = InstrumentedChatOpenAI.completion_tokens + InstrumentedOpenAI.completion_tokens
+    row["total_input_tokens"] += row["selector_input_tokens"]
+    row["total_output_tokens"] += row["selector_output_tokens"]
 
     # ─ InfoMiner ───────────────────────────────────────────────────────────────
     reset_counters()
     inf = AgentInfoMiner()
     doc = inf.query_docs(algo, sel.vectorstore, sel.package_name)
-    row["total_input_tokens"] += InstrumentedOpenAI.prompt_tokens
-    row["total_output_tokens"] += InstrumentedOpenAI.completion_tokens
+    row["infominer_input_tokens"] = InstrumentedOpenAI.prompt_tokens
+    row["infominer_output_tokens"] = InstrumentedOpenAI.completion_tokens
+    row["total_input_tokens"] += row["infominer_input_tokens"]
+    row["total_output_tokens"] += row["infominer_output_tokens"]
 
     # ─ Code Generator ─────────────────────────────────────────────────────────
     reset_counters()
@@ -196,8 +210,10 @@ def run_one(algo: str, train_file: str):
         input_parameters = sel.parameters,
         package_name     = sel.package_name
     )
-    row["total_input_tokens"] += InstrumentedChatOpenAI.prompt_tokens
-    row["total_output_tokens"] += InstrumentedChatOpenAI.completion_tokens
+    row["codegen_input_tokens"] = InstrumentedChatOpenAI.prompt_tokens
+    row["codegen_output_tokens"] = InstrumentedChatOpenAI.completion_tokens
+    row["total_input_tokens"] += row["codegen_input_tokens"]
+    row["total_output_tokens"] += row["codegen_output_tokens"]
 
     # Save the generated code to a file
     folder = "./generated_scripts"
@@ -208,15 +224,45 @@ def run_one(algo: str, train_file: str):
         f.write(code)
     print(f"\n=== [Code Generator] Saved code to {path} ===")
 
-    # ─ Reviewer ────────────────────────────────────────────────────────────────
-    reset_counters()
-    rev = AgentReviewer()
-    err = rev.test_code(code, algo, sel.package_name)
-    row["total_input_tokens"] += InstrumentedChatOpenAI.prompt_tokens
-    row["total_output_tokens"] += InstrumentedChatOpenAI.completion_tokens
-    if err:
+    # ─ Reviewer and Code Revision Loop ────────────────────────────────────────
+    max_revisions = 10  # Maximum number of revision attempts
+    revision_count = 0
+    error = None
+    
+    while revision_count < max_revisions:
+        reset_counters()
+        rev = AgentReviewer()
+        error = rev.test_code(code, algo, sel.package_name)
+        row["reviewer_input_tokens"] = InstrumentedChatOpenAI.prompt_tokens
+        row["reviewer_output_tokens"] = InstrumentedChatOpenAI.completion_tokens
+        row["total_input_tokens"] += row["reviewer_input_tokens"]
+        row["total_output_tokens"] += row["reviewer_output_tokens"]
+        
+        if not error:  # If no error, break the loop
+            break
+            
+        # If there's an error, revise the code
+        revision_count += 1
+        row["revision_count"] = revision_count
+        print(f"\n=== [Code Generator] Revising code (attempt {revision_count}) ===")
+        
+        # Revise the code
+        reset_counters()
+        revised_code = cg.revise_code(code, error)
+        row["codegen_input_tokens"] += InstrumentedChatOpenAI.prompt_tokens
+        row["codegen_output_tokens"] += InstrumentedChatOpenAI.completion_tokens
+        row["total_input_tokens"] += InstrumentedChatOpenAI.prompt_tokens
+        row["total_output_tokens"] += InstrumentedChatOpenAI.completion_tokens
+        code = revised_code
+        
+        # Save the revised code
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(code)
+        print(f"\n=== [Code Generator] Saved revised code to {path} ===")
+    
+    if error:
         row["success"] = False
-        row["error"]   = err
+        row["error"] = error
 
     workflow_end = time.perf_counter()
     row["total_time_sec"] = workflow_end - workflow_start
@@ -233,12 +279,21 @@ def main():
             print(f"\n=== Processing {os.path.basename(train_file)} ===")
             result = run_one(algo, train_file)
             all_results.append(result)
+            
+            # Print detailed token counts for this run
+            print("\n=== Token Usage Summary ===")
+            print(f"Processor: {result['processor_input_tokens']} in, {result['processor_output_tokens']} out")
+            print(f"Selector: {result['selector_input_tokens']} in, {result['selector_output_tokens']} out")
+            print(f"InfoMiner: {result['infominer_input_tokens']} in, {result['infominer_output_tokens']} out")
+            print(f"CodeGenerator: {result['codegen_input_tokens']} in, {result['codegen_output_tokens']} out")
+            print(f"Reviewer: {result['reviewer_input_tokens']} in, {result['reviewer_output_tokens']} out")
+            print(f"Total: {result['total_input_tokens']} in, {result['total_output_tokens']} out")
+            print("=" * 50)
 
     df = pd.DataFrame(all_results)
     
     # Create a 2D table with algorithms as rows and datasets as columns
-    # For each metric (time, tokens in/out)
-    metrics = ['time_sec', 'total_time_sec', 'total_input_tokens', 'total_output_tokens']
+    metrics = ['total_time_sec', 'total_input_tokens', 'total_output_tokens', 'revision_count']
     
     for metric in metrics:
         pivot_df = df.pivot(index='algorithm', columns='dataset', values=metric)

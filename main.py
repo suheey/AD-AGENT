@@ -49,10 +49,10 @@ class FullToolState(TypedDict):
 # ------------------------------------------------------------------
 def call_processor(state: FullToolState) -> dict:
     processor = state["agent_processor"]
-    print("\n=== [processor] Processing user input ===")
+    print("\n=== [Processor] Processing user input ===")
     processor.run_chatbot()
     state["experiment_config"] = processor.experiment_config
-    print("\n=== [processor] User input processing complete ===")
+    print("\n=== [Processor] User input processing complete ===")
     return state
 
 # ------------------------------------------------------------------
@@ -128,12 +128,12 @@ def call_reviewer_for_single_tool(state: FullToolState) -> dict:
     cq       = state["code_quality"]
     tool     = state["current_tool"]
 
-    print(f"\n=== [Reviewer] Unit test for {tool} ===")
+    print(f"\n=== [Reviewer] Running validation for {tool} ===")
     cq.error_message = reviewer.test_code(cq.code, tool, state["package_name"])
 
     if cq.error_message:
         cq.review_count += 1
-    print(f"\n=== [Reviewer] Unit test completed for {tool} ===")
+    print(f"\n=== [Reviewer] Validation completed for {tool} ===")
     return {"code_quality": cq}
 
 # ------------------------------------------------------------------

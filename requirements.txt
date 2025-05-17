@@ -102,3 +102,7 @@ xgboost==2.1.4
 yarl==1.18.3
 zstandard==0.23.0
 darts==0.35.0
+patool==3.0.0
+sktime==0.37.0
+reformer-pytorch == 1.4.4
+PyWavelets
