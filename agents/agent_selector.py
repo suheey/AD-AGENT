@@ -79,7 +79,7 @@ class AgentSelector:
 
     def set_tools(self):
       user_input = self.user_input
-      if user_input['algorithm'] and user_input['algorithm'][0].lower() not in ["all", 'none']:
+      if user_input['algorithm'] and user_input['algorithm'][0].lower() == "all":
         self.tools = self.generate_tools(user_input['algorithm'])
       else:
         name = os.path.basename(self.data_path_train)
@@ -98,7 +98,7 @@ class AgentSelector:
           messages = generate_model_selection_prompt_from_pygod(name, num_node, num_edge, num_feature, avg_degree)
           content = query_openai(messages, model="o4-mini")
           algorithm = json.loads(content)["choice"]
-          print(f"Algorithm: {algorithm}")
+          # print(f"Algorithm: {algorithm}")
         else: # for time series data
           if self.X_train is not None and type(self.X_train) is not str:
             print('Shape of X_train:', self.X_train.shape)
@@ -114,7 +114,6 @@ class AgentSelector:
           else:
             algorithm = 'Autoformer'
 
-        self.tools = self.generate_tools([algorithm])
         print('Selector Parameters:', self.parameters)
         
 
