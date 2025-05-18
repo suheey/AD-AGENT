@@ -47,7 +47,7 @@ TASK:
             "--enc_in", "55"
         Set these three parameters to 10, 5, 0, 1, 55 respectively. This is for small data set unit test only
         You have to set `--enc_in` to 55 to match the data dimension. And chnage all dimention related parameters to 55
-     
+     3. if the algorithm ({algorithm_name}) is `ETSformer`, then set `--top_k` to 1 and `--c_out` to 55.
    • For Darts:
 
     `import numpy as np`
