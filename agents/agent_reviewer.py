@@ -9,14 +9,14 @@ llm = ChatOpenAI(model="gpt-4o", temperature=0)
 
 # Prompt template for generating synthetic test data
 test_prompt = PromptTemplate.from_template("""
-You will receive a Python script for {package_name} that trains an anomaly‑detection model with real datasets.
+You will receive a Python script for {package_name} that trains an anomaly-detection model with real datasets.
 
 --- BEGIN CODE ---
 {code}
 --- END CODE ---
                                            
 TASK:
-1. Replace **all data‑loading operations** (DataLoader, torch.load, np.load, pandas.read*, etc.)
+1. Replace **all data-loading operations** (DataLoader, torch.load, np.load, pandas.read*, etc.)
    with code that creates SMALL synthetic data directly in the script:
    • For PyOD: generate X_train, y_train, X_test, y_test using `generate_data`; 
      `from pyod.utils.data import generate_data`

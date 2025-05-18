@@ -140,9 +140,6 @@ class AgentInfoMiner:
                     print(f"[Cache Warning] Datetime parse error for {algorithm}, re-querying.")
 
         # Step 3: Run actual query outside lock (non-blocking for others)
-
-           
-        
         client = OpenAI()
         match package_name:
             case "pyod":
@@ -160,7 +157,7 @@ class AgentInfoMiner:
             prompt = prompt + "\n\n" + web_dict.get(algorithm, "")
         
         response = client.responses.create(
-            model="gpt-4.1",
+            model="gpt-4o",
             tools=[{"type": "web_search_preview"}],
             input=prompt,
             max_output_tokens=2024

@@ -298,9 +298,9 @@ You are an expert Python developer with deep knowledge of the **Darts** library 
 2. Output **only** executable Python code (no extra text) that performs forecasting-based anomaly detection on two CSV files exactly as specified in the reference implementation.
 
 • Implement the helper function `load_series(path: str) -> TimeSeries` that:  
-  – reads the CSV,  
-  – converts all `value_…` columns into a multivariate `TimeSeries`,  
-  – returns that series.
+  reads the CSV,  
+  converts all `value_…` columns into a multivariate `TimeSeries`,  
+  returns that series.
 
 • Load the datasets:  
   `series_train = load_series({data_path_train})`  

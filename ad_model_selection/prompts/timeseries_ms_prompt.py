@@ -1,4 +1,4 @@
-def generate_model_selection_prompt_from_timeseries(name, num_signals):
+def generate_model_selection_prompt(name, size, dim, type):
 
     user_message = f"""
 You are an expert in model selection for anomaly detection on time series data.
@@ -8,33 +8,25 @@ You are an expert in model selection for anomaly detection on time series data.
 
 ## Dataset Information:
 - Dataset Name: {name}
-- Number of Signals: {num_signals}
+- Dataset Size: {size}
+- Data Dimension: {dim}
+- Data Type: {type}
 
 ## Model Options:
-Autoformer: A Transformer-based model that captures long-term dependencies in time series data through an auto-correlation mechanism.
-
-DLinear: A model that decomposes time series into trend and seasonal components, applying linear transformations for efficient forecasting.
-
-ETSformer: Integrates exponential smoothing techniques into the Transformer architecture to enhance time series forecasting accuracy.
-
-FEDformer: Combines frequency domain analysis with Transformer models to improve long-term time series forecasting performance.
-
-Informer: Utilizes a ProbSparse self-attention mechanism to efficiently handle long sequence time series forecasting tasks.
-
-LightTS: A lightweight model employing sampling-oriented MLP structures for fast and efficient multivariate time series forecasting.
-
-Pyraformer: Introduces a pyramidal attention mechanism to capture long-range dependencies in time series data with reduced complexity.
-
-Reformer: An efficient Transformer variant that uses locality-sensitive hashing for scalable attention in long sequences.
-
-TimesNet: Transforms 1D time series into 2D representations to model temporal variations using convolutional neural networks.
-
-Transformer: A deep learning model leveraging self-attention mechanisms to capture dependencies in sequential data, widely used in time series analysis.
-
+- Decomposition Transformers with Auto-Correlation for Long-Term Series Forecasting (Autoformer)
+- Are Transformers Effective for Time Series Forecasting? (DLinear)
+- Exponential Smoothing Transformers for Time-series Forecasting (ETSformer)
+- Frequency Enhanced Decomposed Transformer for Long-term Series Forecasting (FEDformer)
+- Beyond Efficient Transformer for Long Sequence Time-Series Forecasting (Informer)
+- Less Is More: Fast Multivariate Time Series Forecasting with Light Sampling-oriented MLP Structures (LightTS)
+- Low-complexity Pyramidal Attention for Long-range Time Series Modeling and Forecasting (Pyraformer)
+- The Efficient Transformer (Reformer)
+- Temporal 2D-Variation Modeling for General Time Series Analysis (TimesNet)
+- Attention is All You Need (Transformer)
 
 ## Rules:
-1. Availabel options include Autoformer	DLinear	ETSformer	FEDformer	Informer	LightTS	Pyraformer	Reformer	TimesNet	Transformer
-2. Treat all models equally and evaluate them based on their compatibility with the dataset information and the anomaly detection task.
+1. Availabel options include "Autoformer", "DLinear", "ETSformer", "FEDformer", "Informer", "LightTS", "Pyraformer", "Reformer", "TimesNet", and "Transformer."
+2. Treat all models equally and evaluate them based on their compatibility with the dataset characteristics and the anomaly detection task.
 3. Response Format:
     - Provide responses in a strict **JSON** format with the keys "reason" and "choice."
         - "reason": Your explanation of the reasoning.
