@@ -1,4 +1,4 @@
-def generate_model_selection_prompt(name, size, dim, type):
+def generate_model_selection_prompt_from_timeseries(name, size, dim, type):
 
     user_message = f"""
 You are an expert in model selection for anomaly detection on time series data.

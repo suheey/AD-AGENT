@@ -1,4 +1,4 @@
-def generate_model_selection_prompt(name, num_node, num_edge, num_feature, avg_degree):
+def generate_model_selection_prompt_from_pygod(name, num_node, num_edge, num_feature, avg_degree):
 
     user_message = f"""
 You are an expert in model selection for anomaly detection on graph data.
