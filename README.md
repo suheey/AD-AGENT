@@ -22,7 +22,7 @@
 ### 1. Clone the Repository
 
 ```bash
-git clone xxxxxxxxxx
+git clone git@github.com:USC-FORTIS/AD-AGENT.git
 cd AD-AGENT
 ```
 
@@ -136,3 +136,11 @@ Run all on ./data/glass_train.mat and ./data/glass_test.mat
 - Modify `main.py` to add support for additional algorithms or datasets if needed.
 
 ---
+
+## 👥 Contributors
+
+<a href="https://github.com/USC-FORTIS/AD-AGENT/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=USC-FORTIS/AD-AGENT" />
+</a>
+
+Made with [contrib.rocks](https://contrib.rocks).
