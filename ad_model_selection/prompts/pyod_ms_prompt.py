@@ -1,4 +1,4 @@
-def generate_model_selection_prompt_from_pyod(name, size, dim):
+def generate_model_selection_prompt(name, size, dim):
 
     user_message = f"""
 You are an expert in model selection for anomaly detection on multivariate data.

@@ -1,6 +1,6 @@
-# OpenAD
+# AD-AGENT
 
-**OpenAD** is a multi-agent anomaly detection platform designed to support the full lifecycle of real-world anomaly detection—from data preprocessing and model selection to detection, explanation, and evaluation. It integrates classical and graph-based AD algorithms with LLM-powered modules for enhanced usability, privacy, and adaptability.
+**AD-AGENT** is a multi-agent anomaly detection platform designed to support the full lifecycle of real-world anomaly detection—from data preprocessing and model selection to detection, explanation, and evaluation. It integrates classical and graph-based AD algorithms with LLM-powered modules for enhanced usability, privacy, and adaptability.
 
 > 🔍 One platform. Multiple agents. All your anomaly detection workflows—automated, explainable, and secure.
 
@@ -8,7 +8,7 @@
 
 ## 🔧 Features
 
-- **Modular Pipeline Execution**: Supports tabular, sequential, and graph anomaly detection algorithms for more and more complex data types.
+- **Modular Pipeline Execution**: Supports multivariate, graph, and time-series anomaly detection algorithms for more and more complex data types.
 - **Multi-Agent Architecture**: Detection, explanation, and adaptation are handled by decoupled agents with clear APIs and extendability.
 - **LLM Integration** (in progress): Language models assist in tasks such as explanation, synthetic anomaly generation, and interactive debugging.
 - **Privacy-Aware Design** (in progress): Includes a framework for anonymizing data before AD processing, suitable for regulated domains.
@@ -22,8 +22,8 @@
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/USC-FORTIS/OpenAD.git
-cd OpenAD
+git clone xxxxxxxxxx
+cd AD-AGENT
 ```
 
 ### 2. Create and Activate a Virtual Environment
@@ -91,15 +91,16 @@ You can also run the system with natural-language-like test commands.
 ### Run a Specific Algorithm
 
 ```text
-#pyod
-Run IForest on ./data/glass_train.mat and ./data/glass_test.mat with contamination=0.1
-Run all on ./data/glass_train.mat and ./data/glass_test.mat with contamination=0.1
-#pygod
+# PyOD
+Run IForest on ./data/glass_train.mat and ./data/glass_test.mat
+Run all on ./data/glass_train.mat and ./data/glass_test.mat
+# PyGOD
 Run DOMINANT on ./data/inj_cora_train.pt and ./data/inj_cora_test.pt
-#darts
-Run GlobalNaiveAggregate on ./data/yahoo_train.csv and ./data/yahoo_test.csv
-#tslib
+# TSLib 
 Run LightTS on ./data/MSL and ./data/MSL
+# Darts (in progress)
+Run GlobalNaiveAggregate on ./data/yahoo_train.csv and ./data/yahoo_test.csv
+
 
 ```
 
@@ -135,12 +136,3 @@ Run all on ./data/glass_train.mat and ./data/glass_test.mat
 - Modify `main.py` to add support for additional algorithms or datasets if needed.
 
 ---
-
-## 👥 Contributors
-
-<a href="https://github.com/USC-FORTIS/OpenAD/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=USC-FORTIS/OpenAD" />
-</a>
-
-Made with [contrib.rocks](https://contrib.rocks).
-

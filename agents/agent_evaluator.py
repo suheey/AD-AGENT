@@ -22,7 +22,7 @@ class AgentEvaluator:
 
         # Execute the script using subprocess and capture output
         res = subprocess.run(["python", path], capture_output=True, text=True)
-        print("\n=== Real‑Data Execution Output ===\n", res.stdout, res.stderr)
+        print("\n=== Real-Data Execution Output ===\n", res.stdout, res.stderr)
 
         # If execution failed, return error result
         if res.returncode != 0:
