@@ -31,7 +31,7 @@ class AgentSelector:
       #   self.package_name = "darts"
 
 
-      # self.tools = self.generate_tools(user_input['algorithm'])
+      self.tools = self.generate_tools(user_input['algorithm'])
 
       self.load_data(self.data_path_train, self.data_path_test)
       self.set_tools()
