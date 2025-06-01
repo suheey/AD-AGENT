@@ -1,18 +1,40 @@
 # AD-AGENT
 
-**AD-AGENT** is a multi-agent anomaly detection platform designed to support the full lifecycle of real-world anomaly detection—from data preprocessing and model selection to detection, explanation, and evaluation. It integrates classical and graph-based AD algorithms with LLM-powered modules for enhanced usability, privacy, and adaptability.
+**AD-AGENT** is an LLM‑driven multi-agent anomaly detection platform designed to support the full lifecycle of real-world anomaly detection—from data preprocessing and model selection to detection, explanation, and evaluation. It integrates classical and graph-based AD algorithms with LLM-powered modules for enhanced usability, privacy, and adaptability.
+
+![flowchart](./figs/flowchart.jpg)
 
 > 🔍 One platform. Multiple agents. All your anomaly detection workflows—automated, explainable, and secure.
 
 ---
 
-## 🔧 Features
 
-- **Modular Pipeline Execution**: Supports multivariate, graph, and time-series anomaly detection algorithms for more and more complex data types.
-- **Multi-Agent Architecture**: Detection, explanation, and adaptation are handled by decoupled agents with clear APIs and extendability.
-- **LLM Integration** (in progress): Language models assist in tasks such as explanation, synthetic anomaly generation, and interactive debugging.
+
+## 📝 Citation
+
+If you find this work useful, please cite our paper: [https://arxiv.org/abs/2505.12594](https://arxiv.org/abs/2505.12594)
+
+```json
+@article{yang2025ad,
+  title={AD-AGENT: A Multi-agent Framework for End-to-end Anomaly Detection},
+  author={Yang, Tiankai and Liu, Junjun and Siu, Wingchun and Wang, Jiahang and Qian, Zhuangzhuang and Song, Chanjuan and Cheng, Cheng and Hu, Xiyang and Zhao, Yue},
+  journal={arXiv preprint arXiv:2505.12594},
+  year={2025}
+}
+```
+
+---
+
+## ✨ Features
+
+- **Unified Multi-modal-library Automation**: Supports multiple domain-specific AD libraries (PyOD for multivariate data, PyGOD for graph data, and TSLib for time series) and enables end-to-end, cross-modality pipeline construction from natural language.
+- **Accessible to Non-experts**: Enters a sentence such as "Detect anomalies in cardio.mat" and obtains an executable script without hand‑written code.
+- **Multi-Agent Architecture**: Processing, detection, explanation, and adaptation are handled by decoupled agents with clear APIs and extendability.
+- **Automatic Model Suggestion**: Leverages the reasoning ability of the LLM to recommend competitive algorithms when no specific model is provided.
 - **Privacy-Aware Design** (in progress): Includes a framework for anonymizing data before AD processing, suitable for regulated domains.
 - **Human-in-the-loop Support** (in progress): Enables analysts to query explanations and iterate on detection results interactively.
+
+> Please find more details in our paper [here](https://arxiv.org/abs/2505.12594).
 
 
 ---
@@ -101,8 +123,9 @@ Run LightTS on ./data/MSL and ./data/MSL
 # Darts (in progress)
 Run GlobalNaiveAggregate on ./data/yahoo_train.csv and ./data/yahoo_test.csv
 
-
 ```
+
+<img src="./figs/shortcut.jpg" alt="shortcut" style="zoom:30%;" />
 
 ### Run All Algorithms
 
@@ -127,6 +150,13 @@ Run all on ./data/glass_train.mat and ./data/glass_test.mat
 ├── requirements.txt          # Required Python packages
 └── README.md                 # Project documentation
 ```
+
+---
+
+## 📊 Experiments
+
+- Pipeline generation performance by library, showing success rate (code runs without error), average latency, LLM token usage (input/output), and per-pipeline billing cost in US dollars. The time spent in Reviewer is related to the complexity of models, which explains the increase in TSLib. **AD-AGENT demonstrates high reliability in producing valid pipelines across modalities, with low latency and manageable cost.**![success_table](./figs/success_table.jpg)
+- Model selection results for PyOD and PyGOD. We display the average AUROC of models recommended by querying the reasoning LLM three times (duplicates allowed). "Best Performance" marks the highest performance achieved by any available model for each dataset, while "Average Baseline" denotes the mean performance across all available models. **The LLM's recommendations substantially exceed the average baseline and closely track the best performance in most datasets.**![model_selection](./figs/model_selection.jpg)
 
 ---
 
