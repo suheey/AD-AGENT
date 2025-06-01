@@ -14,7 +14,7 @@
 
 If you find this work useful, please cite our paper: [https://arxiv.org/abs/2505.12594](https://arxiv.org/abs/2505.12594)
 
-```json
+```bibtex
 @article{yang2025ad,
   title={AD-AGENT: A Multi-agent Framework for End-to-end Anomaly Detection},
   author={Yang, Tiankai and Liu, Junjun and Siu, Wingchun and Wang, Jiahang and Qian, Zhuangzhuang and Song, Chanjuan and Cheng, Cheng and Hu, Xiyang and Zhao, Yue},
