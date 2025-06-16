@@ -182,6 +182,7 @@ cython_debug/
 train_data_loader.py
 test_data_loader.py
 cache.json
+!tests/test_data_loader.py
 cache.json.lock
 head_train_data_loader.py
 head_test_data_loader.py
